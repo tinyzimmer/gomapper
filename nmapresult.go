@@ -20,6 +20,7 @@ package main
 import (
 	"encoding/xml"
 	"io/ioutil"
+	"strings"
 )
 
 type NmapRun struct {
@@ -138,5 +139,6 @@ func ParseRun(result string) *NmapRun {
 	file, _ := ioutil.ReadFile(result)
 	res := &NmapRun{}
 	xml.Unmarshal([]byte(string(file)), &res)
+	res.Args = strings.Replace(res.Args, "-oX out.xml ", "", int(1))
 	return res
 }
