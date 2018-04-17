@@ -73,8 +73,9 @@ func (s *Scanner) RunScan() {
 		response.Error = fmt.Sprint(err)
 		response.Stderr = stderr.String()
 		s.Results = response
+	} else {
+		s.Results = s.ParseRun()
 	}
-	s.Results = s.ParseRun()
 }
 
 func (s *Scanner) ParseRun() *NmapRun {
