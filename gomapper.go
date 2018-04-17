@@ -24,7 +24,6 @@ import (
 )
 
 type InputPayload struct {
-	Method string   `json:"method"`
 	Target string   `json:"target"`
 	Args   []string `json:"args"`
 }

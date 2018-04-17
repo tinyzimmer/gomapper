@@ -20,12 +20,14 @@ package main
 import (
 	"log"
 	"os/exec"
+	"strings"
 )
 
 func RunScan(input *InputPayload) *NmapRun {
 	log.Println(input)
 	xmlFile := "out.xml"
-	cmd := exec.Command("nmap", "-sT", input.Target, "-oX", xmlFile)
+	args := strings.Join(input.Args[:], " ")
+	cmd := exec.Command("nmap", args, input.Target, "-oX", xmlFile)
 	err := cmd.Run()
 	results := ParseRun(xmlFile)
 	if err != nil {

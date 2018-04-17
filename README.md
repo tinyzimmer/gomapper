@@ -9,7 +9,7 @@ To compile and build locally:
 # Requires local installation of nmap
 $> go get github.com/tinyzimmer/gomapper
 $> $GOPATH/bin/gomapper
-$> curl localhost:8080/scan -d '{"method": "connect", "target": "127.0.0.1"}'
+$> curl localhost:8080/scan -d '{"args": ["-sT"], "target": "127.0.0.1"}'
 {
     "Scanner": "nmap",
     "Args": "nmap -sT -oX out.xml 127.0.0.1",
