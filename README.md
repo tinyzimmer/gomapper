@@ -15,9 +15,14 @@ $> docker run <image-id/tag>
 To compile and build locally:
 
 ```bash
-# Requires local installation of nmap
+# Requires local installation of nmap to use
 $> go get github.com/tinyzimmer/gomapper
-$> $GOPATH/bin/gomapper
+```
+
+# Running 
+
+```bash
+$> # Start the service via the command line or docker
 $> curl localhost:8080/scan -d '{"args": ["-sT"], "target": "127.0.0.1"}'
 {
     "Scanner": "nmap",
