@@ -15,13 +15,7 @@
     along with gomapper.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-package main
-
-import (
-	"encoding/xml"
-	"io/ioutil"
-	"strings"
-)
+package gomapper
 
 type NmapRun struct {
 	Scanner   string    `xml:"scanner,attr"`
@@ -133,12 +127,4 @@ type Verbose struct {
 
 type Debugging struct {
 	Level int `xml:level,attr`
-}
-
-func ParseRun(result string) *NmapRun {
-	file, _ := ioutil.ReadFile(result)
-	res := &NmapRun{}
-	xml.Unmarshal([]byte(string(file)), &res)
-	res.Args = strings.Replace(res.Args, "-oX out.xml ", "", int(1))
-	return res
 }

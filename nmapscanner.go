@@ -15,28 +15,55 @@
     along with gomapper.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-package main
+package gomapper
 
 import (
 	"bytes"
+	"encoding/xml"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
 )
+
+type Scanner struct {
+	Exec    string
+	Target  string
+	Args    []string
+	Xml     string
+	Results NmapRun
+}
 
 type ErrorResponse struct {
 	Error  string
 	Stderr string
 }
 
-func RunScan(input *InputPayload) interface{} {
-	log.Println(input)
-	xmlFile := "out.xml"
-	args := strings.Join(input.Args[:], " ")
+func InitScanner(target string, args []string) Scanner {
+	scanner := Scanner{}
+	scanner.Target = target
+	scanner.Args = args
+	scanner.Exec = "nmap"
+	file, err := ioutil.TempFile("", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+	scanner.Xml = file.Name()
+	defer os.Remove(file.Name())
+	return scanner
+}
+
+func (s *Scanner) SetExec(exec string) {
+	s.Exec = exec
+}
+
+func (s Scanner) RunScan() interface{} {
+	args := strings.Join(s.Args[:], " ")
 	var out bytes.Buffer
 	var stderr bytes.Buffer
-	cmd := exec.Command("nmap", args, input.Target, "-oX", xmlFile)
+	cmd := exec.Command(s.Exec, args, s.Target, "-oX", s.Xml)
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 	err := cmd.Run()
@@ -47,6 +74,15 @@ func RunScan(input *InputPayload) interface{} {
 		response.Stderr = stderr.String()
 		return response
 	}
-	results := ParseRun(xmlFile)
+	results := s.ParseRun()
 	return results
+}
+
+func (s Scanner) ParseRun() *NmapRun {
+	file, _ := ioutil.ReadFile(s.Xml)
+	res := &NmapRun{}
+	xml.Unmarshal([]byte(string(file)), &res)
+	replaceString := fmt.Sprintf("-oX %s ", s.Xml)
+	res.Args = strings.Replace(res.Args, replaceString, "", int(1))
+	return res
 }
