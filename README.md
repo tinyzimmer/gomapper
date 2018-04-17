@@ -26,7 +26,7 @@ $> # Start the service via the command line or docker
 $> curl localhost:8080/scan -d '{"args": ["-sT"], "target": "127.0.0.1"}'
 {
     "Scanner": "nmap",
-    "Args": "nmap -sT -oX out.xml 127.0.0.1",
+    "Args": "nmap -sT 127.0.0.1",
     "Start": 1523992179,
     "StartStr": "Tue Apr 17 19:09:39 2018",
     "Version": "7.60",
