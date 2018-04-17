@@ -20,6 +20,7 @@ package main
 import (
 	"bytes"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -36,6 +37,7 @@ type Scanner struct {
 	RawEnforce bool
 	Xml        string
 	Results    interface{}
+	Failed     bool
 }
 
 type ErrorResponse struct {
@@ -45,6 +47,7 @@ type ErrorResponse struct {
 
 func InitScanner(input *ScannerInput) Scanner {
 	scanner := Scanner{}
+	scanner.Failed = false
 	scanner.Input = input
 	file, err := ioutil.TempFile("", "")
 	if err != nil {
@@ -57,7 +60,10 @@ func InitScanner(input *ScannerInput) Scanner {
 
 func (s *Scanner) ParseInput() {
 	if s.Input.Target == "" {
-		log.Fatal("No target specfied")
+		err := errors.New("No target provided")
+		log.Println(err)
+		s.Failed = true
+		s.ReturnFail(err, err.Error())
 	} else {
 		s.SetTarget(s.Input.Target)
 	}

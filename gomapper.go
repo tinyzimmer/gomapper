@@ -41,7 +41,9 @@ func receivedScan(w http.ResponseWriter, req *http.Request) {
 	}
 	defer req.Body.Close()
 	scanner := InitScanner(input)
-	scanner.RunScan()
+	if scanner.Failed != true {
+		scanner.RunScan()
+	}
 	dumped, err := json.MarshalIndent(scanner.Results, "", "    ")
 	if err != nil {
 		errString := err.Error()
