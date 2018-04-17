@@ -18,20 +18,35 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
 	"log"
 	"os/exec"
 	"strings"
 )
 
-func RunScan(input *InputPayload) *NmapRun {
+type ErrorResponse struct {
+	Error  string
+	Stderr string
+}
+
+func RunScan(input *InputPayload) interface{} {
 	log.Println(input)
 	xmlFile := "out.xml"
 	args := strings.Join(input.Args[:], " ")
+	var out bytes.Buffer
+	var stderr bytes.Buffer
 	cmd := exec.Command("nmap", args, input.Target, "-oX", xmlFile)
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
 	err := cmd.Run()
-	results := ParseRun(xmlFile)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(fmt.Sprint(err) + ": " + stderr.String())
+		response := ErrorResponse{}
+		response.Error = fmt.Sprint(err)
+		response.Stderr = stderr.String()
+		return response
 	}
+	results := ParseRun(xmlFile)
 	return results
 }
