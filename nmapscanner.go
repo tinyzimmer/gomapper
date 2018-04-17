@@ -51,7 +51,6 @@ func InitScanner(target string, args []string) Scanner {
 		log.Fatal(err)
 	}
 	scanner.Xml = file.Name()
-	defer os.Remove(file.Name())
 	return scanner
 }
 
@@ -84,5 +83,6 @@ func (s *Scanner) ParseRun() *NmapRun {
 	xml.Unmarshal([]byte(string(file)), &res)
 	replaceString := fmt.Sprintf("-oX %s ", s.Xml)
 	res.Args = strings.Replace(res.Args, replaceString, "", int(1))
+	os.Remove(s.Xml)
 	return res
 }
