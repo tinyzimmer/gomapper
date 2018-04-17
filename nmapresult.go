@@ -60,7 +60,7 @@ type Status struct {
 
 type Address struct {
 	Addr     string `xml:"addr,attr"`
-	AddrType string `xml:"addrtype"`
+	AddrType string `xml:"addrtype,attr"`
 }
 
 type Hostnames struct {
