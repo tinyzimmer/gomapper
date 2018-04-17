@@ -3,6 +3,15 @@ REST-like interface in go for running Nmap scans
 
 # Building
 
+To build the docker container which will include an nmap installation:
+
+```bash
+$> git clone https://www.github.com/tinyzimmer/gomapper
+$> cd gomapper
+$> ./build.sh
+$> docker run <image-id/tag>
+```
+
 To compile and build locally:
 
 ```bash
@@ -101,10 +110,3 @@ $> curl localhost:8080/scan -d '{"args": ["-sT"], "target": "127.0.0.1"}'
 }
 ```
 
-To build the docker container:
-
-```bash
-$> git clone https://www.github.com/tinyzimmer/gomapper
-$> cd gomapper
-$> ./build.sh
-```
