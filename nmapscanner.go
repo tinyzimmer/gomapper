@@ -15,7 +15,7 @@
     along with gomapper.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-package gomapper
+package main
 
 import (
 	"bytes"
@@ -29,11 +29,11 @@ import (
 )
 
 type Scanner struct {
-	Exec    string
-	Target  string
-	Args    []string
-	Xml     string
-	Results NmapRun
+	Executable string
+	Target     string
+	Args       []string
+	Xml        string
+	Results    interface{}
 }
 
 type ErrorResponse struct {
@@ -45,7 +45,7 @@ func InitScanner(target string, args []string) Scanner {
 	scanner := Scanner{}
 	scanner.Target = target
 	scanner.Args = args
-	scanner.Exec = "nmap"
+	scanner.Executable = "nmap"
 	file, err := ioutil.TempFile("", "")
 	if err != nil {
 		log.Fatal(err)
@@ -55,15 +55,15 @@ func InitScanner(target string, args []string) Scanner {
 	return scanner
 }
 
-func (s *Scanner) SetExec(exec string) {
-	s.Exec = exec
+func (s *Scanner) SetExec(executable string) {
+	s.Executable = executable
 }
 
-func (s Scanner) RunScan() interface{} {
+func (s *Scanner) RunScan() {
 	args := strings.Join(s.Args[:], " ")
 	var out bytes.Buffer
 	var stderr bytes.Buffer
-	cmd := exec.Command(s.Exec, args, s.Target, "-oX", s.Xml)
+	cmd := exec.Command(s.Executable, args, s.Target, "-oX", s.Xml)
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 	err := cmd.Run()
@@ -72,13 +72,12 @@ func (s Scanner) RunScan() interface{} {
 		response := ErrorResponse{}
 		response.Error = fmt.Sprint(err)
 		response.Stderr = stderr.String()
-		return response
+		s.Results = response
 	}
-	results := s.ParseRun()
-	return results
+	s.Results = s.ParseRun()
 }
 
-func (s Scanner) ParseRun() *NmapRun {
+func (s *Scanner) ParseRun() *NmapRun {
 	file, _ := ioutil.ReadFile(s.Xml)
 	res := &NmapRun{}
 	xml.Unmarshal([]byte(string(file)), &res)

@@ -15,7 +15,7 @@
     along with gomapper.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-package gomapper
+package main
 
 import (
 	"encoding/json"
@@ -40,8 +40,7 @@ func receivedScan(w http.ResponseWriter, req *http.Request) {
 	defer req.Body.Close()
 	scanner := InitScanner(input.Target, input.Args)
 	scanner.RunScan()
-	results := scanner.Results
-	dumped, err := json.MarshalIndent(results, "", "    ")
+	dumped, err := json.MarshalIndent(scanner.Results, "", "    ")
 	if err != nil {
 		errString := err.Error()
 		io.WriteString(w, errString)
