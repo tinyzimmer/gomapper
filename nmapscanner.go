@@ -63,7 +63,7 @@ func (s *Scanner) ParseInput() {
 		err := errors.New("No target provided")
 		log.Println(err)
 		s.Failed = true
-		s.ReturnFail(err, err.Error())
+		s.ReturnFail(err, "")
 	} else {
 		s.SetTarget(s.Input.Target)
 	}
