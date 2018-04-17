@@ -30,8 +30,10 @@ import (
 
 type Scanner struct {
 	Executable string
+	Input      *ScannerInput
 	Target     string
-	Args       []string
+	RawArgs    []string
+	RawEnforce bool
 	Xml        string
 	Results    interface{}
 }
@@ -41,40 +43,95 @@ type ErrorResponse struct {
 	Stderr string
 }
 
-func InitScanner(target string, args []string) Scanner {
+func InitScanner(input *ScannerInput) Scanner {
 	scanner := Scanner{}
-	scanner.Target = target
-	scanner.Args = args
-	scanner.Executable = "nmap"
+	scanner.Input = input
 	file, err := ioutil.TempFile("", "")
 	if err != nil {
 		log.Fatal(err)
 	}
 	scanner.Xml = file.Name()
+	scanner.ParseInput()
 	return scanner
+}
+
+func (s *Scanner) ParseInput() {
+	if s.Input.Target == "" {
+		log.Fatal("No target specfied")
+	} else {
+		s.SetTarget(s.Input.Target)
+	}
+	if s.Input.CustomExec != "" {
+		s.SetExec(s.Input.CustomExec)
+	} else {
+		s.SetExec("nmap")
+	}
+	if len(s.Input.RawArgs) > 0 {
+		s.SetRawInput(s.Input.RawArgs)
+	} else {
+		s.SetHelperInput()
+	}
+}
+
+func (s *Scanner) SetHelperInput() {
+	s.RawEnforce = false
+}
+
+func (s *Scanner) SetRawInput(args []string) {
+	s.RawArgs = args
+	s.RawEnforce = true
 }
 
 func (s *Scanner) SetExec(executable string) {
 	s.Executable = executable
 }
 
+func (s *Scanner) SetTarget(target string) {
+	s.Target = target
+}
+
 func (s *Scanner) RunScan() {
-	args := strings.Join(s.Args[:], " ")
-	var out bytes.Buffer
-	var stderr bytes.Buffer
-	cmd := exec.Command(s.Executable, args, s.Target, "-oX", s.Xml)
-	cmd.Stdout = &out
+	if s.RawEnforce == true {
+		s.RunRawArgScan()
+	} else {
+		s.RunHelperScan()
+	}
+}
+
+func (s *Scanner) RunHelperScan() {
+	stdout, stderr := createPipes()
+	cmd := exec.Command("whoami")
+	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err := cmd.Run()
+	s.HandleReturn(err, stdout.String(), stderr.String())
+}
+
+func (s *Scanner) RunRawArgScan() {
+	stdout, stderr := createPipes()
+	args := strings.Join(s.RawArgs[:], " ")
+	cmd := exec.Command(s.Executable, args, s.Target, "-oX", s.Xml)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	s.HandleReturn(err, stdout.String(), stderr.String())
+}
+
+func (s *Scanner) HandleReturn(err error, stdout string, stderr string) {
 	if err != nil {
-		log.Println(fmt.Sprint(err) + ": " + stderr.String())
-		response := ErrorResponse{}
-		response.Error = fmt.Sprint(err)
-		response.Stderr = stderr.String()
-		s.Results = response
+		msg := stderr
+		s.ReturnFail(err, msg)
 	} else {
 		s.Results = s.ParseRun()
 	}
+}
+
+func (s *Scanner) ReturnFail(err error, msg string) {
+	log.Println(fmt.Sprint(err) + ": " + msg)
+	response := ErrorResponse{}
+	response.Error = fmt.Sprint(err)
+	response.Stderr = msg
+	s.Results = response
 }
 
 func (s *Scanner) ParseRun() *NmapRun {
@@ -85,4 +142,10 @@ func (s *Scanner) ParseRun() *NmapRun {
 	res.Args = strings.Replace(res.Args, replaceString, "", int(1))
 	os.Remove(s.Xml)
 	return res
+}
+
+func createPipes() (bytes.Buffer, bytes.Buffer) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	return stdout, stderr
 }

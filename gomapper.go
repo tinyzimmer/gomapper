@@ -23,14 +23,16 @@ import (
 	"net/http"
 )
 
-type InputPayload struct {
-	Target string   `json:"target"`
-	Args   []string `json:"args"`
+type ScannerInput struct {
+	CustomExec string   `json:"customExec"`
+	Target     string   `json:"target"`
+	Method     string   `json:"method"`
+	RawArgs    []string `json:"rawArgs"`
 }
 
 func receivedScan(w http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
-	input := &InputPayload{}
+	input := &ScannerInput{}
 	err := decoder.Decode(&input)
 	if err != nil {
 		errString := err.Error()
@@ -38,7 +40,7 @@ func receivedScan(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	defer req.Body.Close()
-	scanner := InitScanner(input.Target, input.Args)
+	scanner := InitScanner(input)
 	scanner.RunScan()
 	dumped, err := json.MarshalIndent(scanner.Results, "", "    ")
 	if err != nil {
