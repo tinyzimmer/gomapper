@@ -26,7 +26,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"strings"
 )
 
 type Scanner struct {
@@ -169,8 +168,6 @@ func ParseRun(filePath string) *NmapRun {
 	file, _ := ioutil.ReadFile(filePath)
 	res := &NmapRun{}
 	xml.Unmarshal([]byte(string(file)), &res)
-	replaceString := fmt.Sprintf("-oX %s ", filePath)
-	res.Args = strings.Replace(res.Args, replaceString, "", 1)
 	os.Remove(filePath)
 	return res
 }

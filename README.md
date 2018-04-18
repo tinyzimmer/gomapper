@@ -5,6 +5,8 @@ REST-like interface in go for running Nmap scans
 
 To build the docker container which will include an nmap installation:
 
+*Using the Docker container has the benefit of providing access to root only scans*
+
 ```bash
 $> git clone https://www.github.com/tinyzimmer/gomapper
 $> cd gomapper
