@@ -30,14 +30,15 @@ import (
 )
 
 type Scanner struct {
-	Executable string
-	Input      *ScannerInput
-	Target     string
-	RawArgs    []string
-	RawEnforce bool
-	Xml        string
-	Results    interface{}
-	Failed     bool
+	Executable   string
+	Input        *ScannerInput
+	Target       string
+	RawArgs      []string
+	ComputedArgs []string
+	RawEnforce   bool
+	Xml          string
+	Results      interface{}
+	Failed       bool
 }
 
 type ErrorResponse struct {
@@ -79,13 +80,34 @@ func (s *Scanner) ParseInput() {
 	}
 }
 
+func (s *Scanner) GetHelperArgs() []string {
+	var computedArgs []string
+	if s.Input.Method == "tcp-connect" {
+		computedArgs = append(computedArgs, "-sT")
+	} else if s.Input.Method == "tcp-syn" {
+		computedArgs = append(computedArgs, "-sS")
+	} else if s.Input.Method == "tcp-ack" {
+		computedArgs = append(computedArgs, "-sA")
+	} else if s.Input.Method == "udp" {
+		computedArgs = append(computedArgs, "-sU")
+	}
+	if s.Input.Ports != "" {
+		computedArgs = append(computedArgs, "-p")
+		computedArgs = append(computedArgs, s.Input.Ports)
+	}
+	computedArgs = append(computedArgs, "-oX")
+	computedArgs = append(computedArgs, s.Xml)
+	computedArgs = append(computedArgs, s.Target)
+	return computedArgs
+}
+
 func (s *Scanner) SetHelperInput() {
 	s.RawEnforce = false
 }
 
 func (s *Scanner) SetRawInput(args []string) {
-	s.RawArgs = args
 	s.RawEnforce = true
+	s.RawArgs = args
 }
 
 func (s *Scanner) SetExec(executable string) {
@@ -106,19 +128,21 @@ func (s *Scanner) RunScan() {
 
 func (s *Scanner) RunHelperScan() {
 	stdout, stderr := createPipes()
-	cmd := exec.Command("whoami")
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
+	args := s.GetHelperArgs()
+	cmd := exec.Command(s.Executable, args...)
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
 	err := cmd.Run()
 	s.HandleReturn(err, stdout.String(), stderr.String())
 }
 
 func (s *Scanner) RunRawArgScan() {
 	stdout, stderr := createPipes()
-	args := strings.Join(s.RawArgs[:], " ")
-	cmd := exec.Command(s.Executable, args, s.Target, "-oX", s.Xml)
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
+	rawArgs := append(s.RawArgs, "-oX")
+	rawArgs = append(rawArgs, s.Xml)
+	cmd := exec.Command(s.Executable, rawArgs...)
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
 	err := cmd.Run()
 	s.HandleReturn(err, stdout.String(), stderr.String())
 }
@@ -128,7 +152,7 @@ func (s *Scanner) HandleReturn(err error, stdout string, stderr string) {
 		msg := stderr
 		s.ReturnFail(err, msg)
 	} else {
-		s.Results = s.ParseRun()
+		s.Results = ParseRun(s.Xml)
 	}
 }
 
@@ -140,18 +164,18 @@ func (s *Scanner) ReturnFail(err error, msg string) {
 	s.Results = response
 }
 
-func (s *Scanner) ParseRun() *NmapRun {
-	file, _ := ioutil.ReadFile(s.Xml)
+func ParseRun(filePath string) *NmapRun {
+	file, _ := ioutil.ReadFile(filePath)
 	res := &NmapRun{}
 	xml.Unmarshal([]byte(string(file)), &res)
-	replaceString := fmt.Sprintf("-oX %s ", s.Xml)
-	res.Args = strings.Replace(res.Args, replaceString, "", int(1))
-	os.Remove(s.Xml)
+	replaceString := fmt.Sprintf("-oX %s ", filePath)
+	res.Args = strings.Replace(res.Args, replaceString, "", 1)
+	os.Remove(filePath)
 	return res
 }
 
-func createPipes() (bytes.Buffer, bytes.Buffer) {
+func createPipes() (*bytes.Buffer, *bytes.Buffer) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	return stdout, stderr
+	return &stdout, &stderr
 }

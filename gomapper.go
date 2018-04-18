@@ -27,6 +27,7 @@ type ScannerInput struct {
 	CustomExec string   `json:"customExec"`
 	Target     string   `json:"target"`
 	Method     string   `json:"method"`
+	Ports      string   `json:"ports"`
 	RawArgs    []string `json:"rawArgs"`
 }
 
