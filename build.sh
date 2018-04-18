@@ -3,10 +3,15 @@
 # save start dir
 startDir=$(pwd)
 mkdir -p build/{bin,tmp}
+mkdir -p build/usr/local/share/nmap
+cp -r build/scripts build/usr/local/share/nmap/scripts
 
 cd nmap-build
 docker build -t static-binaries-nmap .
-docker run -v "${startDir}/build/bin":/output static-binaries-nmap
+docker run \
+    -v "${startDir}/build/bin":/output \
+    -v "${startDir}/build/usr/local/share/nmap":/share_output \
+    static-binaries-nmap
 
 if [[ "${?}" != 0 ]]; then
     echo "Nmap compilation failed"

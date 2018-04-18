@@ -51,7 +51,7 @@ function build_nmap() {
 
     # Build
     make -j4
-    /opt/cross/x86_64-linux-musl/bin/x86_64-linux-musl-strip nmap ncat/ncat nping/nping
+    /opt/cross/x86_64-linux-musl/bin/x86_64-linux-musl-strip nmap # ncat/ncat nping/nping
 }
 
 function doit() {
@@ -62,8 +62,16 @@ function doit() {
     if [ -d /output ]
     then
         OUT_DIR=/output
+        SHARE_OUT=/share_output
         mkdir -p $OUT_DIR
         cp /build/nmap-${NMAP_VERSION}/nmap $OUT_DIR/
+        find /build/nmap-${NMAP_VERSION} -type f \
+            -maxdepth 1 \
+            -name "nmap-*" \
+            -exec cp {} ${SHARE_OUT}/ \; \
+            -exec /bin/echo {} \;
+        cp /build/nmap-${NMAP_VERSION}/nse_main.lua "${SHARE_OUT}/" && echo "Copied nse_main"
+        cp -r /build/nmap-${NMAP_VERSION}/nselib "${SHARE_OUT}/" && echo "Copied nselib"
         #cp /build/nmap-${NMAP_VERSION}/ncat/ncat $OUT_DIR/
         #cp /build/nmap-${NMAP_VERSION}/nping/nping $OUT_DIR/
         echo "** Finished **"
