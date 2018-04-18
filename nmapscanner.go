@@ -140,6 +140,7 @@ func (s *Scanner) RunRawArgScan() {
 	stdout, stderr := createPipes()
 	rawArgs := append(s.RawArgs, "-oX")
 	rawArgs = append(rawArgs, s.Xml)
+	rawArgs = append(rawArgs, s.Target)
 	cmd := exec.Command(s.Executable, rawArgs...)
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
