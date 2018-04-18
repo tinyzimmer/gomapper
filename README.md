@@ -11,7 +11,7 @@ To build the docker container which will include an nmap installation:
 $> git clone https://www.github.com/tinyzimmer/gomapper
 $> cd gomapper
 $> ./build.sh
-$> docker run <image-id/tag>
+$> docker run -p 8080:8080 gomapper
 ```
 
 To compile and build locally:
@@ -25,7 +25,7 @@ $> go get github.com/tinyzimmer/gomapper
 
 ```bash
 $> # Start the service via the command line or docker
-$> docker run -p 8080:8080 <image-id/tag>
+$> docker run -p 8080:8080 gomapper
 $> go run gomapper.go
 $> # Leave off ports for default options. Todo is to create more argument generation functions for different scan types and switches
 $> # use "rawArgs" (list) to create a custom scan instead of method
