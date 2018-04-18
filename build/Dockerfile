@@ -1,5 +1,6 @@
-FROM progrium/busybox
-RUN opkg-install nmap
-ADD main /
+FROM scratch
+COPY bin /bin
+COPY usr /usr
+COPY tmp /tmp
 EXPOSE 8080
-CMD ["/main"]
+CMD ["/bin/main"]

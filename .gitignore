@@ -17,5 +17,6 @@
 .glide/
 
 # Any local compiled binaries from the build script
-build/main
+build/bin
+build/bin
 gomapper
