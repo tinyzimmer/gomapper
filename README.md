@@ -13,6 +13,7 @@ $> cd gomapper
 $> ./build.sh
 $> docker run -p 8080:8080 gomapper
 ```
+The container weighs in at about 33.5 MB and will have absolutely nothing but the statically compiled gomapper and nmap binaries, as well as nmap's support documents.
 
 If I keep improving this I'll also try to keep an updated image on dockerhub
 
