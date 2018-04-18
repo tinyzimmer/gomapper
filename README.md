@@ -25,7 +25,7 @@ $> go get github.com/tinyzimmer/gomapper
 
 ```bash
 $> # Start the service via the command line or docker
-$> # Leave off ports for more options. Todo is to create more argument generation functions for different scan types
+$> # Leave off ports for default options. Todo is to create more argument generation functions for different scan types
 $> curl localhost:8080/scan -d '{"target": "127.0.0.1", "method": "tcp-connect", "ports": "22,8080"}'
 {
     "Scanner": "nmap",
