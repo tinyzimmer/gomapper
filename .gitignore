@@ -18,4 +18,6 @@
 
 # Any local compiled binaries from the build script
 build/bin
+build/usr*
+build/tmp*
 gomapper
