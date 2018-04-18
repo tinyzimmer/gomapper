@@ -18,7 +18,7 @@ function build_openssl() {
     cd openssl-${OPENSSL_VERSION}
 
     # Configure
-    CC='/opt/cross/x86_64-linux-musl/bin/x86_64-linux-musl-gcc -static' ./Configure no-shared linux-x86_64
+    CC='/usr/bin/x86_64-alpine-linux-musl-gcc -static' ./Configure no-shared linux-x86_64
 
     # Build
     make
@@ -34,15 +34,14 @@ function build_nmap() {
     cd nmap-${NMAP_VERSION}
 
     # Configure
-    CC='/opt/cross/x86_64-linux-musl/bin/x86_64-linux-musl-gcc -static -fPIC' \
-        CXX='/opt/cross/x86_64-linux-musl/bin/x86_64-linux-musl-g++ -static -static-libstdc++ -fPIC' \
-        LD=/opt/cross/x86_64-linux-musl/bin/x86_64-linux-musl-ld \
+    CC='/usr/bin/x86_64-alpine-linux-musl-gcc -static -fPIC' \
+        CXX='/usr/bin/x86_64-alpine-linux-musl-g++ -static -static-libstdc++ -fPIC' \
+        LD=/usr/x86_64-alpine-linux-musl/bin/ld \
         LDFLAGS="-L/build/openssl-${OPENSSL_VERSION}"   \
         ./configure \
             --without-ndiff \
             --without-zenmap \
             --without-nmap-update \
-            --without-libssh2 \
             --with-pcap=linux \
             --with-openssl=/build/openssl-${OPENSSL_VERSION}
 
@@ -51,7 +50,7 @@ function build_nmap() {
 
     # Build
     make -j4
-    /opt/cross/x86_64-linux-musl/bin/x86_64-linux-musl-strip nmap # ncat/ncat nping/nping
+    /usr/x86_64-alpine-linux-musl/bin/strip nmap # ncat/ncat nping/nping
 }
 
 function doit() {
