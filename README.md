@@ -14,6 +14,13 @@ $> ./build.sh
 $> docker run -p 8080:8080 gomapper
 ```
 
+If I keep improving this I'll also try to keep an updated image on dockerhub
+
+```bash
+$> docker pull tinyzimmer/gomapper
+$> docker run -p 8080:8080 tinyzimmer/gomapper
+```
+
 To compile and build locally:
 
 ```bash
@@ -25,8 +32,7 @@ $> go get github.com/tinyzimmer/gomapper
 
 ```bash
 $> # Start the service via the command line or docker
-$> docker run -p 8080:8080 gomapper
-$> go run gomapper.go
+$> docker run -p 8080:8080 tinyzimmer/gomapper
 $> # Leave off ports for default options. Todo is to create more argument generation functions for different scan types and switches
 $> # use "rawArgs" (list) to create a custom scan instead of method
 $> # Current scan methods: ["tcp-connect", "tcp-ack", "tcp-syn", "udp"]
