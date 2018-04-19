@@ -41,7 +41,7 @@ type Host struct {
 	StartTime int       `xml:"starttime,attr"`
 	EndTime   int       `xml:"endtime,attr"`
 	Status    Status    `xml:"status"`
-	Address   Address   `xml:"address"`
+	Addresses []Address `xml:"address"`
 	Hostnames Hostnames `xml:"hostnames"`
 	Ports     Ports     `xml:"ports"`
 	Times     Times     `xml:"times"`
