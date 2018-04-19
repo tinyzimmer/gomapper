@@ -54,6 +54,7 @@ function build_nmap() {
 }
 
 function doit() {
+    uid="${1}"
     build_openssl
     build_nmap
 
@@ -70,7 +71,10 @@ function doit() {
             -exec cp {} ${SHARE_OUT}/ \; \
             -exec /bin/echo {} \;
         cp /build/nmap-${NMAP_VERSION}/nse_main.lua "${SHARE_OUT}/" && echo "Copied nse_main"
-        cp -r /build/nmap-${NMAP_VERSION}/nselib "${SHARE_OUT}/" && echo "Copied nselib"
+        cp -r /build/nmap-${NMAP_VERSION}/nselib "${SHARE_OUT}/nselib" && echo "Copied nselib"
+        cp -r /build/nmap-${NMAP_VERSION}/scripts "${SHARE_OUT}/scripts" && echo "Copied NSE Scripts"
+        echo " ** Ensuring ownership on output **"
+        chown -R ${uid}: "${OUT_DIR}" "${SHARE_OUT}"
         #cp /build/nmap-${NMAP_VERSION}/ncat/ncat $OUT_DIR/
         #cp /build/nmap-${NMAP_VERSION}/nping/nping $OUT_DIR/
         echo "** Finished **"
@@ -79,4 +83,4 @@ function doit() {
     fi
 }
 
-doit
+doit "${1}"
