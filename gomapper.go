@@ -28,6 +28,9 @@ type ScannerInput struct {
 	Target     string   `json:"target"`
 	Method     string   `json:"method"`
 	Ports      string   `json:"ports"`
+	Detection  string   `json:"detection"`
+	Script     string   `json:"script"`
+	ScriptArgs string   `json:"scriptArgs"`
 	RawArgs    []string `json:"rawArgs"`
 }
 

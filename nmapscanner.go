@@ -90,6 +90,22 @@ func (s *Scanner) GetHelperArgs() []string {
 	} else if s.Input.Method == "udp" {
 		computedArgs = append(computedArgs, "-sU")
 	}
+	if s.Input.Detection == "full" {
+		computedArgs = append(computedArgs, "-A")
+	} else if s.Input.Detection == "os" {
+		computedArgs = append(computedArgs, "-O")
+	} else if s.Input.Detection != "" {
+		err := errors.New("Invalid Detection Method")
+		log.Println(err)
+		s.Failed = true
+		s.ReturnFail(err, "")
+	}
+	if s.Input.Script != "" {
+		computedArgs = append(computedArgs, fmt.Sprintf("--script=%s", s.Input.Script))
+	}
+	if s.Input.ScriptArgs != "" {
+		computedArgs = append(computedArgs, fmt.Sprintf("--script-args=%s", s.Input.ScriptArgs))
+	}
 	if s.Input.Ports != "" {
 		computedArgs = append(computedArgs, "-p")
 		computedArgs = append(computedArgs, s.Input.Ports)
@@ -128,11 +144,13 @@ func (s *Scanner) RunScan() {
 func (s *Scanner) RunHelperScan() {
 	stdout, stderr := createPipes()
 	args := s.GetHelperArgs()
-	cmd := exec.Command(s.Executable, args...)
-	cmd.Stdout = stdout
-	cmd.Stderr = stderr
-	err := cmd.Run()
-	s.HandleReturn(err, stdout.String(), stderr.String())
+	if s.Failed != true {
+		cmd := exec.Command(s.Executable, args...)
+		cmd.Stdout = stdout
+		cmd.Stderr = stderr
+		err := cmd.Run()
+		s.HandleReturn(err, stdout.String(), stderr.String())
+	}
 }
 
 func (s *Scanner) RunRawArgScan() {

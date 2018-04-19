@@ -77,12 +77,32 @@ type Port struct {
 	PortId   int     `xml:"portid,attr"`
 	State    Status  `xml:"state"`
 	Service  Service `xml:"service"`
+	Script   Script  `xml:"script"`
 }
 
 type Service struct {
-	Name   string `xml:"name,attr"`
-	Method string `xml:"method,attr"`
-	Conf   string `xml:"conf,attr"`
+	Name      string `xml:"name,attr"`
+	Product   string `xml:"product,attr"`
+	Version   string `xml:"version,attr"`
+	ExtraInfo string `xml:"extrainfo,attr"`
+	Method    string `xml:"method,attr"`
+	Conf      string `xml:"conf,attr"`
+	Cpe       string `xml:"cpe"`
+}
+
+type Script struct {
+	Id     string  `xml:"id,attr"`
+	Ouput  string  `xml:"output,attr"`
+	Tables []Table `xml:"table"`
+}
+
+type Table struct {
+	Elems []Elem `xml:"elem"`
+}
+
+type Elem struct {
+	Key   string `xml:"key,attr"`
+	Value string `xml:",innerxml"`
 }
 
 type ExtraPorts struct {
