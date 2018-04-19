@@ -2,6 +2,8 @@
 
 # save start dir
 startDir=$(pwd)
+echo "Initializing build directories"
+rm -rf build/{bin,tmp,usr}
 mkdir -p build/{bin,tmp}
 mkdir -p build/usr/local/share/nmap
 
