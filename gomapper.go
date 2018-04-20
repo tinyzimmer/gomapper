@@ -28,13 +28,14 @@ func main() {
 		logError(err.Error())
 		return
 	} else {
+		mux := http.NewServeMux()
+		mux.HandleFunc("/scan", receivedScan)
 		if isPrivateAddr(addr) {
 			logInfo(fmt.Sprintf("Listening on private address: %s:8080", addr))
 		} else {
 			logInfo(fmt.Sprintf("Listening on public address %s:8080", addr))
 		}
-		mux := http.NewServeMux()
-		mux.HandleFunc("/scan", receivedScan)
+		go detectLocalNetworks(addr)
 		http.ListenAndServe(fmt.Sprintf("%s:8080", addr), mux)
 	}
 }
