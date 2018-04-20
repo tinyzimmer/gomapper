@@ -30,7 +30,7 @@ import (
 
 type Scanner struct {
 	Executable   string
-	Input        *ScannerInput
+	ReqInput     *ReqInput
 	Target       string
 	RawArgs      []string
 	ComputedArgs []string
@@ -45,75 +45,17 @@ type ErrorResponse struct {
 	Stderr string
 }
 
-func InitScanner(input *ScannerInput) Scanner {
+func InitScanner(target string) (Scanner, error) {
 	scanner := Scanner{}
+	scanner.SetTarget(target)
 	scanner.Failed = false
-	scanner.Input = input
-	file, err := ioutil.TempFile("", "")
+	xml, err := getOutXml()
 	if err != nil {
-		log.Fatal(err)
+		err := errors.New("Could not initiate scanner")
+		return scanner, err
 	}
-	scanner.Xml = file.Name()
-	scanner.ParseInput()
-	return scanner
-}
-
-func (s *Scanner) ParseInput() {
-	if s.Input.Target == "" {
-		err := errors.New("No target provided")
-		log.Println(err)
-		s.Failed = true
-		s.ReturnFail(err, "")
-	} else {
-		s.SetTarget(s.Input.Target)
-	}
-	if s.Input.CustomExec != "" {
-		s.SetExec(s.Input.CustomExec)
-	} else {
-		s.SetExec("nmap")
-	}
-	if len(s.Input.RawArgs) > 0 {
-		s.SetRawInput(s.Input.RawArgs)
-	} else {
-		s.SetHelperInput()
-	}
-}
-
-func (s *Scanner) GetHelperArgs() []string {
-	var computedArgs []string
-	if s.Input.Method == "tcp-connect" {
-		computedArgs = append(computedArgs, "-sT")
-	} else if s.Input.Method == "tcp-syn" {
-		computedArgs = append(computedArgs, "-sS")
-	} else if s.Input.Method == "tcp-ack" {
-		computedArgs = append(computedArgs, "-sA")
-	} else if s.Input.Method == "udp" {
-		computedArgs = append(computedArgs, "-sU")
-	}
-	if s.Input.Detection == "full" {
-		computedArgs = append(computedArgs, "-A")
-	} else if s.Input.Detection == "os" {
-		computedArgs = append(computedArgs, "-O")
-	} else if s.Input.Detection != "" {
-		err := errors.New("Invalid Detection Method")
-		log.Println(err)
-		s.Failed = true
-		s.ReturnFail(err, "")
-	}
-	if s.Input.Script != "" {
-		computedArgs = append(computedArgs, fmt.Sprintf("--script=%s", s.Input.Script))
-	}
-	if s.Input.ScriptArgs != "" {
-		computedArgs = append(computedArgs, fmt.Sprintf("--script-args=%s", s.Input.ScriptArgs))
-	}
-	if s.Input.Ports != "" {
-		computedArgs = append(computedArgs, "-p")
-		computedArgs = append(computedArgs, s.Input.Ports)
-	}
-	computedArgs = append(computedArgs, "-oX")
-	computedArgs = append(computedArgs, s.Xml)
-	computedArgs = append(computedArgs, s.Target)
-	return computedArgs
+	scanner.Xml = xml
+	return scanner, nil
 }
 
 func (s *Scanner) SetHelperInput() {
@@ -143,8 +85,12 @@ func (s *Scanner) RunScan() {
 
 func (s *Scanner) RunHelperScan() {
 	stdout, stderr := createPipes()
-	args := s.GetHelperArgs()
-	if s.Failed != true {
+	args, err := GetHelperArgs(s.ReqInput, s.Xml)
+	if err != nil {
+		log.Println(err)
+		s.Failed = true
+		s.HandleReturn(err, "", "")
+	} else {
 		cmd := exec.Command(s.Executable, args...)
 		cmd.Stdout = stdout
 		cmd.Stderr = stderr
@@ -194,4 +140,13 @@ func createPipes() (*bytes.Buffer, *bytes.Buffer) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	return &stdout, &stderr
+}
+
+func getOutXml() (string, error) {
+	file, err := ioutil.TempFile("", "")
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
+	return file.Name(), nil
 }

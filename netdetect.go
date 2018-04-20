@@ -18,19 +18,23 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"net/http"
+	"errors"
+	"net"
 )
 
-func main() {
-	addr, err := getAddr()
+func getAddr() (net.IP, error) {
+	addrs, err := net.InterfaceAddrs()
 	if err != nil {
-		log.Fatal(err)
-	} else {
-		log.Println(fmt.Sprintf("Listening on %s:8080", addr))
-		mux := http.NewServeMux()
-		mux.HandleFunc("/scan", receivedScan)
-		http.ListenAndServe(":8080", mux)
+		return net.IP{}, err
 	}
+	for _, a := range addrs {
+		if ipnet, ok := a.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if len(ipnet.IP.To4()) == net.IPv4len {
+				return ipnet.IP, nil
+			}
+		}
+	}
+	out_err := errors.New("Failed to retrieve socket address")
+	return net.IP{}, out_err
+
 }
