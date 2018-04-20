@@ -33,6 +33,8 @@ func receivedScan(w http.ResponseWriter, req *http.Request) {
 		logError(fmt.Sprintf("\t:s", input))
 		io.WriteString(w, "{\"error\": \"invalid request json\"}\n")
 		return
+	} else {
+		logInfo(fmt.Sprintf("Received Request: %s", input))
 	}
 	defer req.Body.Close()
 	scanner, err := RequestScanner(input)
@@ -40,8 +42,11 @@ func receivedScan(w http.ResponseWriter, req *http.Request) {
 		logError("Failed to initiate scanner")
 		io.WriteString(w, fmt.Sprintf("{\"error\": \"%s\"}\n", err))
 		return
+	} else {
+		logInfo("Initiating nmap scan")
 	}
 	scanner.RunScan()
+	logInfo("Returning scan results")
 	dumped, err := json.MarshalIndent(scanner.Results, "", "    ")
 	if err != nil {
 		errString := err.Error()

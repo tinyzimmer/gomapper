@@ -81,6 +81,9 @@ func GetHelperArgs(input *ReqInput, xml string) ([]string, error) {
 		computedArgs = append(computedArgs, "-sA")
 	} else if input.Method == "udp" {
 		computedArgs = append(computedArgs, "-sU")
+	} else if input.Method != "" {
+		err := errors.New("Invalid scan method")
+		return nil, err
 	}
 	if input.Detection == "full" {
 		computedArgs = append(computedArgs, "-A")
@@ -88,7 +91,6 @@ func GetHelperArgs(input *ReqInput, xml string) ([]string, error) {
 		computedArgs = append(computedArgs, "-O")
 	} else if input.Detection != "" {
 		err := errors.New("Invalid Detection Method")
-		logError(err.Error())
 		return nil, err
 	}
 	if input.Script != "" {

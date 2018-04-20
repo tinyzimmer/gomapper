@@ -86,7 +86,6 @@ func (s *Scanner) RunHelperScan() {
 	stdout, stderr := createPipes()
 	args, err := GetHelperArgs(s.ReqInput, s.Xml)
 	if err != nil {
-		logError(err.Error())
 		s.Failed = true
 		s.HandleReturn(err, "", "")
 	} else {
@@ -120,7 +119,11 @@ func (s *Scanner) HandleReturn(err error, stdout string, stderr string) {
 }
 
 func (s *Scanner) ReturnFail(err error, msg string) {
-	logError(fmt.Sprint(err) + ": " + msg)
+	if msg != "" {
+		logError(fmt.Sprint(err) + ": " + msg)
+	} else {
+		logError(fmt.Sprint(err))
+	}
 	response := ErrorResponse{}
 	response.Error = fmt.Sprint(err)
 	response.Stderr = msg
