@@ -20,7 +20,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"log"
 )
 
 type ReqInput struct {
@@ -40,13 +39,13 @@ func RequestScanner(input *ReqInput) (Scanner, error) {
 	scanner.ReqInput = input
 	xml, err := getOutXml()
 	if err != nil {
-		log.Println(err)
+		logError(err.Error())
 		return scanner, err
 	}
 	scanner.Xml = xml
 	target, err := checkTarget(input.Target)
 	if err != nil {
-		log.Println(err)
+		logError(err.Error())
 		return scanner, err
 	} else {
 		scanner.SetTarget(target)
@@ -67,7 +66,6 @@ func RequestScanner(input *ReqInput) (Scanner, error) {
 func checkTarget(target string) (string, error) {
 	if target == "" {
 		err := errors.New("No target provided")
-		log.Println(err)
 		return "", err
 	}
 	return target, nil
@@ -90,7 +88,7 @@ func GetHelperArgs(input *ReqInput, xml string) ([]string, error) {
 		computedArgs = append(computedArgs, "-O")
 	} else if input.Detection != "" {
 		err := errors.New("Invalid Detection Method")
-		log.Println(err)
+		logError(err.Error())
 		return nil, err
 	}
 	if input.Script != "" {

@@ -19,22 +19,20 @@ package main
 
 import (
 	"fmt"
-	"net/http"
+	"log"
 )
 
-func main() {
-	addr, err := getAddr()
-	if err != nil {
-		logError(err.Error())
-		return
-	} else {
-		if isPrivateAddr(addr) {
-			logInfo(fmt.Sprintf("Listening on private address: %s:8080", addr))
-		} else {
-			logInfo(fmt.Sprintf("Listening on public address %s:8080", addr))
-		}
-		mux := http.NewServeMux()
-		mux.HandleFunc("/scan", receivedScan)
-		http.ListenAndServe(fmt.Sprintf("%s:8080", addr), mux)
-	}
+func logError(msg string) {
+	line := fmt.Sprintf("\033[0;31mERROR:\033[0m %s", msg)
+	log.Println(line)
+}
+
+func logWarn(msg string) {
+	line := fmt.Sprintf("\033[0;33mWARNING:\033[0m %s", msg)
+	log.Println(line)
+}
+
+func logInfo(msg string) {
+	line := fmt.Sprintf("\033[0;32mINFO:\033[0m %s", msg)
+	log.Println(line)
 }

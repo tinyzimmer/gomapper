@@ -19,7 +19,6 @@ package main
 
 import (
 	"errors"
-	"log"
 	"net"
 )
 
@@ -45,7 +44,7 @@ func isPrivateAddr(addr net.IP) bool {
 	for _, network := range private_nets {
 		_, ipnet, err := net.ParseCIDR(network)
 		if err != nil {
-			log.Println("Failed to get address membership")
+			logError("Failed to get address membership")
 			return false
 		}
 		if ipnet.Contains(addr) {

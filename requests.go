@@ -19,8 +19,8 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
-	"log"
 	"net/http"
 )
 
@@ -29,17 +29,16 @@ func receivedScan(w http.ResponseWriter, req *http.Request) {
 	input := &ReqInput{}
 	err := decoder.Decode(&input)
 	if err != nil {
-		log.Println("Invalid JSON in request payload")
-		log.Println(input)
+		logError("Invalid JSON in request payload")
+		logError(fmt.Sprintf("\t:s", input))
 		io.WriteString(w, "{\"error\": \"invalid request json\"}\n")
 		return
 	}
 	defer req.Body.Close()
 	scanner, err := RequestScanner(input)
 	if err != nil {
-		log.Println("Failed to initiate scanner")
-		log.Println(err)
-		io.WriteString(w, "{\"error\": \"failed to initiate a scanner\"}\n")
+		logError("Failed to initiate scanner")
+		io.WriteString(w, fmt.Sprintf("{\"error\": \"%s\"}\n", err))
 		return
 	}
 	scanner.RunScan()
