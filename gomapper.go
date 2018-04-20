@@ -28,9 +28,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	} else {
-		log.Println(fmt.Sprintf("Listening on %s:8080", addr))
+		if isPrivateAddr(addr) {
+			log.Println(fmt.Sprintf("Listening on private address: %s:8080", addr))
+		} else {
+			log.Println(fmt.Sprintf("Listening on public address %s:8080", addr))
+		}
 		mux := http.NewServeMux()
 		mux.HandleFunc("/scan", receivedScan)
-		http.ListenAndServe(":8080", mux)
+		http.ListenAndServe(fmt.Sprintf("%s:8080", addr), mux)
 	}
 }

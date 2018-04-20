@@ -19,6 +19,7 @@ package main
 
 import (
 	"errors"
+	"log"
 	"net"
 )
 
@@ -37,4 +38,19 @@ func getAddr() (net.IP, error) {
 	out_err := errors.New("Failed to retrieve socket address")
 	return net.IP{}, out_err
 
+}
+
+func isPrivateAddr(addr net.IP) bool {
+	var private_nets = [3]string{"192.168.0.0/8", "10.0.0.0/8", "172.0.0.0/8"}
+	for _, network := range private_nets {
+		_, ipnet, err := net.ParseCIDR(network)
+		if err != nil {
+			log.Println("Failed to get address membership")
+			return false
+		}
+		if ipnet.Contains(addr) {
+			return true
+		}
+	}
+	return false
 }
