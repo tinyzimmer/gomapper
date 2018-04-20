@@ -336,3 +336,12 @@ $> curl localhost:8080/scan -d '{"target": "127.0.0.1", "method": "udp", "script
             ...
 }
 ```
+
+You can also use the docker container as a standalone nmap installation
+
+```bash
+$> docker run --rm tinyzimmer/gomapper /bin/nmap
+$> # or
+$> alias nmap='docker run --rm tinyzimmer/gomapper /bin/nmap'
+$> nmap
+```
