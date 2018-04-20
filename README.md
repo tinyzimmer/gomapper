@@ -1,7 +1,7 @@
 # gomapper
 REST-like interface in go for running Nmap scans
 
-# Building
+# Building/Downloading
 
 To build the docker container which will include an nmap installation:
 
@@ -13,13 +13,22 @@ $> cd gomapper
 $> ./build.sh
 $> docker run -p 8080:8080 gomapper
 ```
-The container weighs in at about 33.5 MB and will have absolutely nothing but the statically compiled gomapper and nmap binaries, as well as nmap's support documents.
+The container weighs in at about 30 MB and will have absolutely nothing but the statically compiled gomapper and nmap binaries, as well as nmap's support documents.
 
 If I keep improving this I'll also try to keep an updated image on dockerhub
 
 ```bash
 $> docker pull tinyzimmer/gomapper
 $> docker run -p 8080:8080 tinyzimmer/gomapper
+```
+
+You can also use the docker container as a standalone nmap installation
+
+```bash
+$> docker run --rm tinyzimmer/gomapper /bin/nmap
+$> # or
+$> alias nmap='docker run --rm tinyzimmer/gomapper /bin/nmap'
+$> nmap
 ```
 
 To compile and build locally:
@@ -335,13 +344,4 @@ $> curl localhost:8080/scan -d '{"target": "127.0.0.1", "method": "udp", "script
             },
             ...
 }
-```
-
-You can also use the docker container as a standalone nmap installation
-
-```bash
-$> docker run --rm tinyzimmer/gomapper /bin/nmap
-$> # or
-$> alias nmap='docker run --rm tinyzimmer/gomapper /bin/nmap'
-$> nmap
 ```
