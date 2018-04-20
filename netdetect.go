@@ -92,6 +92,7 @@ func detectLocalNetworks(addr net.IP) ([]net.IPNet, error) {
 	var networks []net.IPNet
 	destAddr, err := destAddr(DEFAULT_PING_HOST)
 	if err != nil {
+		logError(fmt.Sprintf("Trace Detection Error: %s", err.Error()))
 		return networks, err
 	}
 	var sourceAddr [4]byte
@@ -103,10 +104,12 @@ func detectLocalNetworks(addr net.IP) ([]net.IPNet, error) {
 	for {
 		recvSocket, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_RAW, syscall.IPPROTO_ICMP)
 		if err != nil {
+			logError(fmt.Sprintf("Trace Detection Error: %s", err.Error()))
 			return networks, err
 		}
 		sendSocket, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_DGRAM, syscall.IPPROTO_UDP)
 		if err != nil {
+			logError(fmt.Sprintf("Trace Detection Error: %s", err.Error()))
 			return networks, err
 		}
 		syscall.SetsockoptInt(sendSocket, 0x0, syscall.IP_TTL, ttl)
