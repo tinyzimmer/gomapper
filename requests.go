@@ -25,6 +25,7 @@ import (
 )
 
 func receivedScan(w http.ResponseWriter, req *http.Request) {
+	logInfo(fmt.Sprintf("Received Request: %s", req))
 	decoder := json.NewDecoder(req.Body)
 	input := &ReqInput{}
 	err := decoder.Decode(&input)
@@ -34,7 +35,7 @@ func receivedScan(w http.ResponseWriter, req *http.Request) {
 		io.WriteString(w, "{\"error\": \"invalid request json\"}\n")
 		return
 	} else {
-		logInfo(fmt.Sprintf("Received Request: %s", input))
+		logInfo(fmt.Sprintf("Parsed Request: %s", input))
 	}
 	defer req.Body.Close()
 	scanner, err := RequestScanner(input)
