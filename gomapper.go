@@ -34,7 +34,7 @@ func main() {
 		graphAvailable = true
 	}
 	mux := http.NewServeMux()
-	mux.HandleFunc("/scan", receivedScan)
+	mux.HandleFunc("/scan", graph.receivedScan)
 	mux.HandleFunc("/query", graph.IterateNetworks)
 	if isPrivateAddr(addr) {
 		logInfo(fmt.Sprintf("Listening on private address: %s:8080", addr))

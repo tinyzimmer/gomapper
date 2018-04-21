@@ -22,10 +22,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-
-	"github.com/cayleygraph/cayley"
-	"github.com/cayleygraph/cayley/quad"
 )
+
+type GraphedNetwork struct {
+	Hosts []string
+}
 
 func logRequest(req *http.Request) {
 	msg := fmt.Sprintf("%s : %s %s : %s", req.RemoteAddr, req.Method, req.Proto, req.RequestURI)
@@ -40,7 +41,7 @@ func formatResponse(data interface{}) (string, error) {
 	return string(dumped) + "\n", nil
 }
 
-func receivedScan(w http.ResponseWriter, req *http.Request) {
+func (g Graph) receivedScan(w http.ResponseWriter, req *http.Request) {
 	logRequest(req)
 	decoder := json.NewDecoder(req.Body)
 	input := &ReqInput{}
@@ -69,6 +70,8 @@ func receivedScan(w http.ResponseWriter, req *http.Request) {
 		response, _ := formatResponse(scanner.Error)
 		io.WriteString(w, response)
 	} else {
+		logInfo("Adding scan results to graph")
+		g.AddScanResultsByNetwork("", scanner.Results)
 		logInfo("Returning scan results")
 		response, _ := formatResponse(scanner.Results)
 		io.WriteString(w, response)
@@ -77,38 +80,17 @@ func receivedScan(w http.ResponseWriter, req *http.Request) {
 
 func (g Graph) IterateNetworks(w http.ResponseWriter, req *http.Request) {
 	hosts := make(map[string]*GraphedNetwork)
-	p := cayley.StartPath(g.Store, quad.String("Subnets")).Out(quad.String("Subnet"))
-	p.Iterate(nil).EachValue(nil, func(value quad.Value) {
-		nativeValue := quad.NativeOf(value)
-		valueString := fmt.Sprint(nativeValue)
-		_, ok := hosts[valueString]
+	subnets := g.GetSubnets()
+	for _, subnet := range subnets {
+		_, ok := hosts[subnet]
 		if !ok {
 			network := &GraphedNetwork{}
-			hosts[valueString] = network
+			hosts[subnet] = network
 		}
-	})
+	}
 	for subnet, graphedNetwork := range hosts {
-		p := cayley.StartPath(g.Store, quad.String("Hosts")).Out(quad.String(subnet))
-		p.Iterate(nil).EachValue(nil, func(value quad.Value) {
-			nativeValue := quad.NativeOf(value)
-			valueString := fmt.Sprint(nativeValue)
-			graphedNetwork.Hosts = append(graphedNetwork.Hosts, valueString)
-		})
+		graphedNetwork.Hosts = g.GetHostsBySubnet(subnet)
 	}
 	response, _ := formatResponse(hosts)
 	io.WriteString(w, response)
-}
-
-func contains(slice []string, item string) bool {
-	set := make(map[string]struct{}, len(slice))
-	for _, s := range slice {
-		set[s] = struct{}{}
-	}
-
-	_, ok := set[item]
-	return ok
-}
-
-type GraphedNetwork struct {
-	Hosts []string
 }

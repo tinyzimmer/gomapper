@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -40,6 +41,11 @@ type Hop struct {
 	N           int
 	ElapsedTime time.Duration
 	TTL         int
+}
+
+func formatDefaultNetmask(ip string) string {
+	split := strings.Split(ip, ".")
+	return fmt.Sprintf("%s.%s.%s.0/%s", split[0], split[1], split[2], DEFAULT_ASSUMED_NETMASK)
 }
 
 func getAddr() (net.IP, error) {
@@ -101,14 +107,7 @@ func probeNetwork(graph Graph, network string) {
 	if !scanner.Failed {
 		numHosts := len(scanner.Results.Hosts)
 		logInfo(fmt.Sprintf("Probe of %s complete. Found %v hosts", network, numHosts))
-		for _, host := range scanner.Results.Hosts {
-			for _, address := range host.Addresses {
-				if address.AddrType == "ipv4" {
-					graph.AddHost(network, address.Addr)
-					logInfo(fmt.Sprintf("Adding %s to memory graph under %s", address.Addr, network))
-				}
-			}
-		}
+		graph.AddScanResultsByNetwork(network, scanner.Results)
 	} else {
 		logError(fmt.Sprintf("Scan of %s failed", network))
 	}

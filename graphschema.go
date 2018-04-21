@@ -18,6 +18,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/cayleygraph/cayley"
 	"github.com/cayleygraph/cayley/graph"
 	"github.com/cayleygraph/cayley/quad"
@@ -37,10 +39,65 @@ func getMemoryGraph() (graph Graph, err error) {
 	return
 }
 
+func (g Graph) GetSubnets() (subnets []string) {
+	p := cayley.StartPath(g.Store, quad.String("Subnets")).Out(quad.String("Subnet"))
+	p.Iterate(nil).EachValue(nil, func(value quad.Value) {
+		nativeValue := quad.NativeOf(value)
+		valueString := fmt.Sprint(nativeValue)
+		if !contains(subnets, valueString) {
+			subnets = append(subnets, valueString)
+		}
+	})
+	return
+}
+
+func (g Graph) GetHostsBySubnet(subnet string) (hosts []string) {
+	p := cayley.StartPath(g.Store, quad.String("Hosts")).Out(quad.String(subnet))
+	p.Iterate(nil).EachValue(nil, func(value quad.Value) {
+		nativeValue := quad.NativeOf(value)
+		valueString := fmt.Sprint(nativeValue)
+		hosts = append(hosts, valueString)
+	})
+	return
+}
+
+func (g Graph) AddScanResultsByNetwork(network string, results *NmapRun) {
+	subnets := g.GetSubnets()
+	for _, host := range results.Hosts {
+		for _, address := range host.Addresses {
+			if address.AddrType == "ipv4" {
+				if network != "" {
+					g.AddHost(network, address.Addr)
+					logInfo(fmt.Sprintf("Added %s to memory graph under %s", address.Addr, network))
+				} else {
+					formatDefault := formatDefaultNetmask(address.Addr)
+					if !contains(subnets, formatDefault) {
+						logInfo(fmt.Sprintf("Adding new subnet to memory graph: %s", formatDefault))
+						g.AddNetwork(formatDefault)
+						subnets = g.GetSubnets()
+					}
+					g.AddHost(formatDefault, address.Addr)
+					logInfo(fmt.Sprintf("Added %s to memory graph under %s", address.Addr, formatDefault))
+				}
+
+			}
+		}
+	}
+}
+
 func (g Graph) AddNetwork(network string) {
 	g.Store.AddQuad(quad.Make("Subnets", "Subnet", network, nil))
 }
 
 func (g Graph) AddHost(network string, host string) {
 	g.Store.AddQuad(quad.Make("Hosts", network, host, nil))
+}
+
+func contains(slice []string, item string) bool {
+	set := make(map[string]struct{}, len(slice))
+	for _, s := range slice {
+		set[s] = struct{}{}
+	}
+	_, ok := set[item]
+	return ok
 }
