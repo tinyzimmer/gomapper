@@ -24,8 +24,13 @@ import (
 	"net/http"
 )
 
+func logRequest(req *http.Request) {
+	msg := fmt.Sprintf("%s : %s %s : %s", req.RemoteAddr, req.Method, req.Proto, req.RequestURI)
+	logInfo(fmt.Sprintf("Received Request: %s", msg))
+}
+
 func receivedScan(w http.ResponseWriter, req *http.Request) {
-	logInfo(fmt.Sprintf("Received Request: %s", req))
+	logRequest(req)
 	decoder := json.NewDecoder(req.Body)
 	input := &ReqInput{}
 	err := decoder.Decode(&input)
@@ -40,7 +45,8 @@ func receivedScan(w http.ResponseWriter, req *http.Request) {
 	defer req.Body.Close()
 	scanner, err := RequestScanner(input)
 	if err != nil {
-		logError("Failed to initiate scanner")
+		errString := err.Error()
+		logError(errString)
 		io.WriteString(w, fmt.Sprintf("{\"error\": \"%s\"}\n", err))
 		return
 	} else {
@@ -51,6 +57,7 @@ func receivedScan(w http.ResponseWriter, req *http.Request) {
 	dumped, err := json.MarshalIndent(scanner.Results, "", "    ")
 	if err != nil {
 		errString := err.Error()
+		logError(errString)
 		io.WriteString(w, errString)
 		return
 	}
