@@ -9,6 +9,14 @@ To build the docker container which will include an nmap installation:
 
 *Using the Docker container has the benefit of providing access to root only nmap functions*
 
+## Build Dependencies
+* internet connection (required)
+* docker (required)
+* golang (required)
+* upx (optional) - golang binaries apparently compress a crapload
+
+## Build/Pull
+
 ```bash
 $> git clone https://www.github.com/tinyzimmer/gomapper
 $> cd gomapper
@@ -33,12 +41,17 @@ $> alias nmap='docker run --rm tinyzimmer/gomapper /bin/nmap'
 $> nmap
 ```
 
+## Building without docker
+
 To compile and build locally:
 
 ```bash
 # Requires local installation of nmap to use
 $> go get github.com/tinyzimmer/gomapper
+$> go install github.com/tinyzimmer/gomapper
 ```
+
+If you run this way without root, network discovery will be disabled
 
 # Running
 
