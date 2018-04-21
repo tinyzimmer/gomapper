@@ -36,7 +36,7 @@ func receivedScan(w http.ResponseWriter, req *http.Request) {
 	err := decoder.Decode(&input)
 	if err != nil {
 		logError("Invalid JSON in request payload")
-		logError(fmt.Sprintf("\t:s", input))
+		logError(fmt.Sprintf("\t:%s", input))
 		io.WriteString(w, "{\"error\": \"invalid request json\"}\n")
 		return
 	} else {
