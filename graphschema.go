@@ -43,6 +43,10 @@ func (g Graph) AddNetwork(network string) {
 	g.Store.AddQuad(quad.Make("Networks", "Network", network, nil))
 }
 
+func (g Graph) AddHost(network string, host string) {
+	g.Store.AddQuad(quad.Make("Networks", "Network", network, host))
+}
+
 func (g Graph) IterateNetworks() (networks []string, err error) {
 	p := cayley.StartPath(g.Store, quad.String("Networks")).Out(quad.String("Network"))
 	err = p.Iterate(nil).EachValue(nil, func(value quad.Value) {

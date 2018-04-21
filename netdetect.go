@@ -101,6 +101,14 @@ func probeNetwork(graph Graph, network string) {
 	if !scanner.Failed {
 		numHosts := len(scanner.Results.Hosts)
 		logInfo(fmt.Sprintf("Probe of %s complete. Found %v hosts", network, numHosts))
+		for _, host := range scanner.Results.Hosts {
+			for _, address := range host.Addresses {
+				if address.AddrType == "ipv4" {
+					graph.AddHost(network, address.Addr)
+					logInfo(fmt.Sprintf("Adding %s to memory graph under %s", address.Addr, network))
+				}
+			}
+		}
 	} else {
 		logError(fmt.Sprintf("Scan of %s failed", network))
 	}
