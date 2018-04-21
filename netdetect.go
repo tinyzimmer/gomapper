@@ -31,6 +31,7 @@ const DEFAULT_PORT = 33434
 const DEFAULT_PACKET_SIZE = 52
 const DEFAULT_MAX_HOPS = 64
 const DEFAULT_MAX_RETRIES = 3
+const DEFAULT_ASSUMED_NETMASK = "24"
 
 type Hop struct {
 	Success     bool
@@ -103,7 +104,7 @@ func localNetworkDiscovery(addr net.IP) {
 	} else {
 		for _, network := range networks {
 			if graphAvailable {
-				logInfo(fmt.Sprintf("Adding %s/24 to memory graph", network.IP.String()))
+				logInfo(fmt.Sprintf("Adding %s/%s to memory graph", network.IP.String(), DEFAULT_ASSUMED_NETMASK))
 				graph.AddNetwork(network)
 			}
 		}
@@ -153,7 +154,7 @@ func detectLocalNetworks(addr net.IP) ([]net.IPNet, error) {
 			if isPrivateAddr(netObj) {
 				network := net.IPNet{IP: netObj, Mask: net.IPv4Mask(255, 255, 255, 0)}
 				networks = append(networks, network)
-				logInfo(fmt.Sprintf("Local Network Detected: %s/24", network.IP))
+				logInfo(fmt.Sprintf("Local Network Detected: %s/%s", network.IP, DEFAULT_ASSUMED_NETMASK))
 			}
 			ttl += 1
 			retry = 0
