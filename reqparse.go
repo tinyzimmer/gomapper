@@ -20,6 +20,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type ReqInput struct {
@@ -71,26 +72,50 @@ func checkTarget(target string) (string, error) {
 	return target, nil
 }
 
-func GetHelperArgs(input *ReqInput, xml string) ([]string, error) {
-	var computedArgs []string
-	if input.Method == "tcp-connect" {
-		computedArgs = append(computedArgs, "-sT")
-	} else if input.Method == "tcp-syn" {
-		computedArgs = append(computedArgs, "-sS")
-	} else if input.Method == "tcp-ack" {
-		computedArgs = append(computedArgs, "-sA")
-	} else if input.Method == "udp" {
-		computedArgs = append(computedArgs, "-sU")
-	} else if input.Method != "" {
+func checkScanMethod(method string) (string, error) {
+	if method == "tcp-connect" {
+		return "-sT", nil
+	} else if method == "tcp-syn" {
+		return "-sS", nil
+	} else if method == "tcp-ack" {
+		return "-sA", nil
+	} else if method == "udp" {
+		return "-sU", nil
+	} else if method == "ping" {
+		return "-sn", nil
+	} else if method != "" {
 		err := errors.New("Invalid scan method")
+		return "", err
+	}
+	return "", nil
+
+}
+
+func checkDetectionMethod(method string) (string, error) {
+	if method == "full" {
+		return "-A", nil
+	} else if method == "os" {
+		return "-O", nil
+	} else if method != "" {
+		err := errors.New("Invalid Detection Method")
+		return "", err
+	}
+	return "", nil
+}
+
+func GetHelperArgs(input *ReqInput, xml string) ([]string, error) {
+	logInfo("Determining scan arguments")
+	var computedArgs []string
+	method, err := checkScanMethod(input.Method)
+	if err == nil {
+		computedArgs = append(computedArgs, method)
+	} else {
 		return nil, err
 	}
-	if input.Detection == "full" {
-		computedArgs = append(computedArgs, "-A")
-	} else if input.Detection == "os" {
-		computedArgs = append(computedArgs, "-O")
-	} else if input.Detection != "" {
-		err := errors.New("Invalid Detection Method")
+	detection, err := checkDetectionMethod(input.Detection)
+	if err == nil {
+		computedArgs = append(computedArgs, detection)
+	} else {
 		return nil, err
 	}
 	if input.Script != "" {
@@ -106,5 +131,6 @@ func GetHelperArgs(input *ReqInput, xml string) ([]string, error) {
 	computedArgs = append(computedArgs, "-oX")
 	computedArgs = append(computedArgs, xml)
 	computedArgs = append(computedArgs, input.Target)
+	logInfo(strings.Join(computedArgs, " "))
 	return computedArgs, nil
 }
