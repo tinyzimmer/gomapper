@@ -88,6 +88,28 @@ func isPrivateAddr(addr net.IP) bool {
 	return false
 }
 
+func localNetworkDiscovery(addr net.IP) {
+	graph, err := getMemoryGraph()
+	var graphAvailable bool
+	if err != nil {
+		logError(fmt.Sprintf("Failed to connect to database: %s", err.Error()))
+		graphAvailable = false
+	} else {
+		graphAvailable = true
+	}
+	networks, err := detectLocalNetworks(addr)
+	if err != nil {
+		logError("Could not detect local networks. Discovery is disabled.")
+	} else {
+		for _, network := range networks {
+			if graphAvailable {
+				logInfo(fmt.Sprintf("Adding %s/24 to memory graph", network.IP.String()))
+				graph.AddNetwork(network)
+			}
+		}
+	}
+}
+
 func detectLocalNetworks(addr net.IP) ([]net.IPNet, error) {
 	var networks []net.IPNet
 	destAddr, err := destAddr(DEFAULT_PING_HOST)
@@ -104,12 +126,13 @@ func detectLocalNetworks(addr net.IP) ([]net.IPNet, error) {
 	for {
 		recvSocket, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_RAW, syscall.IPPROTO_ICMP)
 		if err != nil {
-			logError(fmt.Sprintf("Trace Detection Error: %s", err.Error()))
+			logWarn("Could not create raw socket, are you running in the docker container? If not, try root.")
+			logWarn(fmt.Sprintf("Traceroute Detection Error: %s", err.Error()))
 			return networks, err
 		}
 		sendSocket, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_DGRAM, syscall.IPPROTO_UDP)
 		if err != nil {
-			logError(fmt.Sprintf("Trace Detection Error: %s", err.Error()))
+			logWarn(fmt.Sprintf("Traceroute Detection Error: %s", err.Error()))
 			return networks, err
 		}
 		syscall.SetsockoptInt(sendSocket, 0x0, syscall.IP_TTL, ttl)
