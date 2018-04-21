@@ -41,7 +41,7 @@ func main() {
 	} else {
 		logInfo(fmt.Sprintf("Listening on public address %s:8080", addr))
 	}
-	if graphAvailable {
+	if graphAvailable && isPrivateAddr(addr) {
 		go localNetworkDiscovery(addr, graph)
 	}
 	http.ListenAndServe(fmt.Sprintf("%s:8080", addr), mux)
