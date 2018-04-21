@@ -130,7 +130,7 @@ type RunStats struct {
 type Finished struct {
 	Time    int     `xml:"time,attr"`
 	TimeStr string  `xml:"timestr,attr"`
-	Elapsed float32 `xml:"elapsed,attr"`
+	Elapsed float64 `xml:"elapsed,attr"`
 	Summary string  `xml:"summary,attr"`
 	Exit    string  `xml:"exit,attr"`
 }
