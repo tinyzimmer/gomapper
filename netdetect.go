@@ -146,7 +146,7 @@ func detectLocalNetworks(addr net.IP) ([]net.IPNet, error) {
 	for {
 		recvSocket, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_RAW, syscall.IPPROTO_ICMP)
 		if err != nil {
-			logWarn("Could not create raw socket, are you running in the docker container? If not, try root.")
+			logWarn("Could not create raw socket for ping probe, are you running in the docker container? If not, do that, or try root.")
 			logWarn(fmt.Sprintf("Traceroute Detection Error: %s", err.Error()))
 			return networks, err
 		}
