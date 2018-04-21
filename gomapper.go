@@ -35,7 +35,7 @@ func main() {
 		} else {
 			logInfo(fmt.Sprintf("Listening on public address %s:8080", addr))
 		}
-		go detectLocalNetworks(addr)
+		go localNetworkDiscovery(addr)
 		http.ListenAndServe(fmt.Sprintf("%s:8080", addr), mux)
 	}
 }
