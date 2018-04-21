@@ -18,8 +18,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/cayleygraph/cayley"
 	"github.com/cayleygraph/cayley/graph"
 	"github.com/cayleygraph/cayley/quad"
@@ -40,18 +38,9 @@ func getMemoryGraph() (graph Graph, err error) {
 }
 
 func (g Graph) AddNetwork(network string) {
-	g.Store.AddQuad(quad.Make("Networks", "Network", network, nil))
+	g.Store.AddQuad(quad.Make("Subnets", "Subnet", network, nil))
 }
 
 func (g Graph) AddHost(network string, host string) {
-	g.Store.AddQuad(quad.Make("Networks", "Network", network, host))
-}
-
-func (g Graph) IterateNetworks() (networks []string, err error) {
-	p := cayley.StartPath(g.Store, quad.String("Networks")).Out(quad.String("Network"))
-	err = p.Iterate(nil).EachValue(nil, func(value quad.Value) {
-		nativeValue := quad.NativeOf(value)
-		networks = append(networks, fmt.Sprint(nativeValue))
-	})
-	return
+	g.Store.AddQuad(quad.Make("Hosts", network, host, nil))
 }

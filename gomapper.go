@@ -24,18 +24,25 @@ import (
 
 func main() {
 	addr, err := getAddr()
+	graph, err := getMemoryGraph()
+	var graphAvailable bool
 	if err != nil {
-		logError(err.Error())
-		return
+		logError(fmt.Sprintf("Failed to connect to database: %s", err.Error()))
+		logWarn("Network Discovery is disabled")
+		graphAvailable = false
 	} else {
-		mux := http.NewServeMux()
-		mux.HandleFunc("/scan", receivedScan)
-		if isPrivateAddr(addr) {
-			logInfo(fmt.Sprintf("Listening on private address: %s:8080", addr))
-		} else {
-			logInfo(fmt.Sprintf("Listening on public address %s:8080", addr))
-		}
-		go localNetworkDiscovery(addr)
-		http.ListenAndServe(fmt.Sprintf("%s:8080", addr), mux)
+		graphAvailable = true
 	}
+	mux := http.NewServeMux()
+	mux.HandleFunc("/scan", receivedScan)
+	mux.HandleFunc("/query", graph.IterateNetworks)
+	if isPrivateAddr(addr) {
+		logInfo(fmt.Sprintf("Listening on private address: %s:8080", addr))
+	} else {
+		logInfo(fmt.Sprintf("Listening on public address %s:8080", addr))
+	}
+	if graphAvailable {
+		go localNetworkDiscovery(addr, graph)
+	}
+	http.ListenAndServe(fmt.Sprintf("%s:8080", addr), mux)
 }

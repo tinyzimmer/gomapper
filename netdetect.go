@@ -114,26 +114,17 @@ func probeNetwork(graph Graph, network string) {
 	}
 }
 
-func localNetworkDiscovery(addr net.IP) {
-	graph, err := getMemoryGraph()
-	var graphAvailable bool
-	if err != nil {
-		logError(fmt.Sprintf("Failed to connect to database: %s", err.Error()))
-		graphAvailable = false
-	} else {
-		graphAvailable = true
-	}
+func localNetworkDiscovery(addr net.IP, graph Graph) {
+
 	networks, err := detectLocalNetworks(addr)
 	if err != nil {
 		logError("Could not detect local networks. Discovery is disabled.")
 	} else {
 		for _, network := range networks {
-			if graphAvailable {
-				networkString := fmt.Sprintf("%s/%s", network.IP.String(), DEFAULT_ASSUMED_NETMASK)
-				logInfo(fmt.Sprintf("Adding %s to memory graph", networkString))
-				graph.AddNetwork(networkString)
-				go probeNetwork(graph, networkString)
-			}
+			networkString := fmt.Sprintf("%s/%s", network.IP.String(), DEFAULT_ASSUMED_NETMASK)
+			logInfo(fmt.Sprintf("Adding %s to memory graph", networkString))
+			graph.AddNetwork(networkString)
+			go probeNetwork(graph, networkString)
 		}
 	}
 }

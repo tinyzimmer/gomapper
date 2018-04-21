@@ -22,11 +22,22 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/cayleygraph/cayley"
+	"github.com/cayleygraph/cayley/quad"
 )
 
 func logRequest(req *http.Request) {
 	msg := fmt.Sprintf("%s : %s %s : %s", req.RemoteAddr, req.Method, req.Proto, req.RequestURI)
 	logInfo(fmt.Sprintf("Received Request: %s", msg))
+}
+
+func formatResponse(data interface{}) (string, error) {
+	dumped, err := json.MarshalIndent(data, "", "    ")
+	if err != nil {
+		return "", err
+	}
+	return string(dumped) + "\n", nil
 }
 
 func receivedScan(w http.ResponseWriter, req *http.Request) {
@@ -55,11 +66,49 @@ func receivedScan(w http.ResponseWriter, req *http.Request) {
 	scanner.RunScan()
 	if scanner.Failed {
 		logWarn("User requested scan failed")
-		dumped, _ := json.MarshalIndent(scanner.Error, "", "    ")
-		io.WriteString(w, string(dumped)+"\n")
+		response, _ := formatResponse(scanner.Error)
+		io.WriteString(w, response)
 	} else {
 		logInfo("Returning scan results")
-		dumped, _ := json.MarshalIndent(scanner.Results, "", "    ")
-		io.WriteString(w, string(dumped)+"\n")
+		response, _ := formatResponse(scanner.Results)
+		io.WriteString(w, response)
 	}
+}
+
+func (g Graph) IterateNetworks(w http.ResponseWriter, req *http.Request) {
+	hosts := make(map[string]*GraphedNetwork)
+	p := cayley.StartPath(g.Store, quad.String("Subnets")).Out(quad.String("Subnet"))
+	p.Iterate(nil).EachValue(nil, func(value quad.Value) {
+		nativeValue := quad.NativeOf(value)
+		valueString := fmt.Sprint(nativeValue)
+		_, ok := hosts[valueString]
+		if !ok {
+			network := &GraphedNetwork{}
+			hosts[valueString] = network
+		}
+	})
+	for subnet, graphedNetwork := range hosts {
+		p := cayley.StartPath(g.Store, quad.String("Hosts")).Out(quad.String(subnet))
+		p.Iterate(nil).EachValue(nil, func(value quad.Value) {
+			nativeValue := quad.NativeOf(value)
+			valueString := fmt.Sprint(nativeValue)
+			graphedNetwork.Hosts = append(graphedNetwork.Hosts, valueString)
+		})
+	}
+	response, _ := formatResponse(hosts)
+	io.WriteString(w, response)
+}
+
+func contains(slice []string, item string) bool {
+	set := make(map[string]struct{}, len(slice))
+	for _, s := range slice {
+		set[s] = struct{}{}
+	}
+
+	_, ok := set[item]
+	return ok
+}
+
+type GraphedNetwork struct {
+	Hosts []string
 }
