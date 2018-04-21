@@ -56,6 +56,7 @@ $> docker run -p 8080:8080 tinyzimmer/gomapper
 $> # Leave off ports for default options. Todo is to create more argument generation functions for different scan types and switches
 $> # use "rawArgs" (list) to create a custom scan instead of method
 $> # Current scan methods: ["tcp-connect", "tcp-ack", "tcp-syn", "udp", "ping"]
+$> curl localhost:8080/scan -d '{"target": "127.0.0.1"}' # defaults
 $> curl localhost:8080/scan -d '{"target": "127.0.0.1", "method": "tcp-connect", "ports": "22,8080"}'
 $> curl localhost:8080/scan -d '{"target": "127.0.0.1", "detection": "full", "ports": "8080"}'
 $> curl localhost:8080/scan -d '{"target": "127.0.0.1", "rawArgs": ["-f", "--data-length", "200", "-T3"]}'
