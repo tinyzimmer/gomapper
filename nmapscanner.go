@@ -25,6 +25,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"strconv"
 )
 
 type Scanner struct {
@@ -114,7 +115,9 @@ func (s *Scanner) HandleReturn(err error, stdout string, stderr string) {
 		msg := stderr
 		s.ReturnFail(err, msg)
 	} else {
-		s.Results = ParseRun(s.Xml)
+		results := ParseRun(s.Xml)
+		s.Results = results
+		logInfo(fmt.Sprintf("Scan completed in %s seconds", strconv.FormatFloat(results.RunStats.Finished.Elapsed, 'g', 4, 64)))
 	}
 }
 
