@@ -42,9 +42,9 @@ $> go get github.com/tinyzimmer/gomapper
 
 # Running
 
-![Server side](doc/server.png)
+![Server side](doc/server.apng)
 
-![Client side](doc/client.png)
+![Client side](doc/client.apng)
 
 ```bash
 $> # Start the service via the command line or docker
