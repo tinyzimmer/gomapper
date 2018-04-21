@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# see if we can shed a few lbs
+UPX_ENABLED=1
+which upx &> /dev/null || UPX_ENABLED=0
+
 # save start dir
 startDir=$(pwd)
 echo "Initializing build directories"
@@ -27,6 +31,8 @@ cd build
 echo -n "Compiling static go binary..."
 CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o bin/main ..
 echo "Done"
-upx bin/main
+if [[ ${UPX_ENABLED} == 1 ]] ; then
+  upx bin/main
+fi
 docker build . -t gomapper --no-cache
 cd "${startDir}"
