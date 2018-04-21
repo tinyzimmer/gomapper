@@ -53,13 +53,13 @@ func receivedScan(w http.ResponseWriter, req *http.Request) {
 		logInfo("Initiating nmap scan")
 	}
 	scanner.RunScan()
-	logInfo("Returning scan results")
-	dumped, err := json.MarshalIndent(scanner.Results, "", "    ")
-	if err != nil {
-		errString := err.Error()
-		logError(errString)
-		io.WriteString(w, errString)
-		return
+	if scanner.Failed {
+		logWarn("User requested scan failed")
+		dumped, _ := json.MarshalIndent(scanner.Error, "", "    ")
+		io.WriteString(w, string(dumped)+"\n")
+	} else {
+		logInfo("Returning scan results")
+		dumped, _ := json.MarshalIndent(scanner.Results, "", "    ")
+		io.WriteString(w, string(dumped)+"\n")
 	}
-	io.WriteString(w, string(dumped)+"\n")
 }

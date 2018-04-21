@@ -89,6 +89,23 @@ func isPrivateAddr(addr net.IP) bool {
 	return false
 }
 
+func probeNetwork(graph Graph, network string) {
+	logInfo(fmt.Sprintf("Probing network: %s", network))
+	scanner, err := InitScanner(network)
+	if err != nil {
+		return
+	}
+	args := []string{"-sn"}
+	scanner.SetRawInput(args)
+	scanner.RunScan()
+	if !scanner.Failed {
+		numHosts := len(scanner.Results.Hosts)
+		logInfo(fmt.Sprintf("Probe of %s complete. Found %v hosts", network, numHosts))
+	} else {
+		logError(fmt.Sprintf("Scan of %s failed", network))
+	}
+}
+
 func localNetworkDiscovery(addr net.IP) {
 	graph, err := getMemoryGraph()
 	var graphAvailable bool
@@ -104,8 +121,10 @@ func localNetworkDiscovery(addr net.IP) {
 	} else {
 		for _, network := range networks {
 			if graphAvailable {
-				logInfo(fmt.Sprintf("Adding %s/%s to memory graph", network.IP.String(), DEFAULT_ASSUMED_NETMASK))
-				graph.AddNetwork(network)
+				networkString := fmt.Sprintf("%s/%s", network.IP.String(), DEFAULT_ASSUMED_NETMASK)
+				logInfo(fmt.Sprintf("Adding %s to memory graph", networkString))
+				graph.AddNetwork(networkString)
+				go probeNetwork(graph, networkString)
 			}
 		}
 	}

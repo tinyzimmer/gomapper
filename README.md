@@ -7,7 +7,7 @@ Actually, I am also turning it into a queryable, passive network mapper that sto
 
 To build the docker container which will include an nmap installation:
 
-*Using the Docker container has the benefit of providing access to root only scans*
+*Using the Docker container has the benefit of providing access to root only nmap functions*
 
 ```bash
 $> git clone https://www.github.com/tinyzimmer/gomapper
@@ -40,7 +40,7 @@ To compile and build locally:
 $> go get github.com/tinyzimmer/gomapper
 ```
 
-# Running 
+# Running
 
 ```bash
 $> # Start the service via the command line or docker

@@ -36,7 +36,8 @@ type Scanner struct {
 	ComputedArgs []string
 	RawEnforce   bool
 	Xml          string
-	Results      interface{}
+	Results      *NmapRun
+	Error        ErrorResponse
 	Failed       bool
 }
 
@@ -49,6 +50,7 @@ func InitScanner(target string) (Scanner, error) {
 	scanner := Scanner{}
 	scanner.SetTarget(target)
 	scanner.Failed = false
+	scanner.SetExec("nmap")
 	xml, err := getOutXml()
 	if err != nil {
 		err := errors.New("Could not initiate scanner")
@@ -130,7 +132,8 @@ func (s *Scanner) ReturnFail(err error, msg string) {
 	response := ErrorResponse{}
 	response.Error = fmt.Sprint(err)
 	response.Stderr = msg
-	s.Results = response
+	s.Failed = true
+	s.Error = response
 }
 
 func ParseRun(filePath string) *NmapRun {

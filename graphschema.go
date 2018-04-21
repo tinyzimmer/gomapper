@@ -19,10 +19,10 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/cayleygraph/cayley"
 	"github.com/cayleygraph/cayley/graph"
 	"github.com/cayleygraph/cayley/quad"
-	"net"
 )
 
 type Graph struct {
@@ -39,9 +39,8 @@ func getMemoryGraph() (graph Graph, err error) {
 	return
 }
 
-func (g Graph) AddNetwork(network net.IPNet) {
-	formatted := fmt.Sprintf("%s/24", network.IP.String())
-	g.Store.AddQuad(quad.Make("Networks", "Network", formatted, nil))
+func (g Graph) AddNetwork(network string) {
+	g.Store.AddQuad(quad.Make("Networks", "Network", network, nil))
 }
 
 func (g Graph) IterateNetworks() (networks []string, err error) {
