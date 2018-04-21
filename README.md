@@ -1,6 +1,8 @@
 # gomapper
 REST-like interface in go for running Nmap scans
 
+Actually, I am also turning it into a queryable, passive network mapper that stores it's data in memory graphs
+
 # Building/Downloading
 
 To build the docker container which will include an nmap installation:
