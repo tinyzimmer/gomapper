@@ -60,9 +60,12 @@ func getAddr() (net.IP, error) {
 			}
 		}
 	}
-	out_err := errors.New("Failed to retrieve socket address")
-	return net.IP{}, out_err
+	outErr := errors.New("Failed to retrieve socket address")
+	return net.IP{}, outErr
+}
 
+func getIpObj(ip string) net.IP {
+	return net.ParseIP(ip)
 }
 
 func destAddr(dest string) (destAddr [4]byte, err error) {
@@ -81,7 +84,7 @@ func destAddr(dest string) (destAddr [4]byte, err error) {
 }
 
 func isPrivateAddr(addr net.IP) bool {
-	var private_nets = [3]string{"192.168.0.0/8", "10.0.0.0/8", "172.0.0.0/8"}
+	var private_nets = [4]string{"192.168.0.0/8", "10.0.0.0/8", "172.0.0.0/8", "127.0.0.0/24"}
 	for _, network := range private_nets {
 		_, ipnet, err := net.ParseCIDR(network)
 		if err != nil {
@@ -113,8 +116,12 @@ func probeNetwork(graph Graph, network string) {
 	}
 }
 
-func localNetworkDiscovery(addr net.IP, graph Graph) {
-
+func localNetworkDiscovery(addr net.IP, graph Graph, config Configuration) {
+	for _, netw := range config.Discovery.Networks {
+		logInfo(fmt.Sprintf("Adding %s to memory graph", netw))
+		graph.AddNetwork(netw)
+		go probeNetwork(graph, netw)
+	}
 	networks, err := detectLocalNetworks(addr)
 	if err != nil {
 		logError("Could not detect local networks. Discovery is disabled.")
@@ -126,6 +133,37 @@ func localNetworkDiscovery(addr net.IP, graph Graph) {
 			go probeNetwork(graph, networkString)
 		}
 	}
+}
+
+func notifyDiscoveryDisabled() {
+	logWarn("Network discovery is disabled")
+}
+
+func setupNetworkDiscovery() (addr net.IP, graph Graph, err error) {
+	addr, err = getAddr()
+	if err != nil {
+		logError(err.Error())
+		notifyDiscoveryDisabled()
+		return
+	}
+	graph, err = getMemoryGraph()
+	if err != nil {
+		logError(err.Error())
+		notifyDiscoveryDisabled()
+		return
+	}
+	return
+}
+
+func netContains(slice []net.IPNet, item net.IPNet) bool {
+	set := make(map[string]struct{}, len(slice))
+	for _, s := range slice {
+		netStr := s.String()
+		set[netStr] = struct{}{}
+	}
+	itemStr := item.String()
+	_, ok := set[itemStr]
+	return ok
 }
 
 func detectLocalNetworks(addr net.IP) ([]net.IPNet, error) {
@@ -170,8 +208,10 @@ func detectLocalNetworks(addr net.IP) ([]net.IPNet, error) {
 			netObj := net.IPv4(currAddr[0], currAddr[1], currAddr[2], byte(0))
 			if isPrivateAddr(netObj) {
 				network := net.IPNet{IP: netObj, Mask: net.IPv4Mask(255, 255, 255, 0)}
-				networks = append(networks, network)
-				logInfo(fmt.Sprintf("Local Network Detected: %s/%s", network.IP, DEFAULT_ASSUMED_NETMASK))
+				if !netContains(networks, network) {
+					networks = append(networks, network)
+					logInfo(fmt.Sprintf("Local Network Detected: %s/%s", network.IP, DEFAULT_ASSUMED_NETMASK))
+				}
 			}
 			ttl += 1
 			retry = 0

@@ -22,3 +22,4 @@ build/usr*
 build/tmp*
 gomapper
 data.sqlite
+config.toml

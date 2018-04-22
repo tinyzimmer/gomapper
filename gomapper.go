@@ -18,31 +18,37 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"net"
 	"net/http"
 )
 
-func main() {
-	addr, err := getAddr()
-	graph, err := getMemoryGraph()
-	var graphAvailable bool
-	if err != nil {
-		logError(fmt.Sprintf("Failed to connect to database: %s", err.Error()))
-		logWarn("Network Discovery is disabled")
-		graphAvailable = false
-	} else {
-		graphAvailable = true
-	}
+func startHttpListener(addr net.IP, port string, graph Graph) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/scan", graph.receivedScan)
 	mux.HandleFunc("/query", graph.IterateNetworks)
 	if isPrivateAddr(addr) {
-		logInfo(fmt.Sprintf("Listening on private address: %s:8080", addr))
+		logInfo(fmt.Sprintf("Listening on private address: %s:%s", addr, port))
 	} else {
-		logInfo(fmt.Sprintf("Listening on public address %s:8080", addr))
+		logInfo(fmt.Sprintf("Listening on public address %s:%s", addr, port))
 	}
-	if graphAvailable && isPrivateAddr(addr) {
-		go localNetworkDiscovery(addr, graph)
+	http.ListenAndServe(fmt.Sprintf("%s:%s", addr, port), mux)
+}
+
+func main() {
+	var configFile = flag.String("config", "", "toml configuration file")
+	flag.Parse()
+	config, err := getConfig(configFile)
+	if err != nil {
+		logError(err.Error())
+		return
 	}
-	http.ListenAndServe(fmt.Sprintf("%s:8080", addr), mux)
+	addr := getIpObj(config.Server.ListenAddress)
+	port := config.Server.ListenPort
+	localAddr, graph, err := setupNetworkDiscovery()
+	if err == nil && config.Discovery.Enabled {
+		go localNetworkDiscovery(localAddr, graph, config)
+	}
+	startHttpListener(addr, port, graph)
 }
