@@ -27,12 +27,17 @@ func logError(msg string) {
 	log.Println(line)
 }
 
+func logInfo(msg string) {
+	line := fmt.Sprintf("\033[0;32mINFO:\033[0m %s", msg)
+	log.Println(line)
+}
+
 func logWarn(msg string) {
 	line := fmt.Sprintf("\033[0;33mWARNING:\033[0m %s", msg)
 	log.Println(line)
 }
 
-func logInfo(msg string) {
-	line := fmt.Sprintf("\033[0;32mINFO:\033[0m %s", msg)
+func logDebug(msg string) {
+	line := fmt.Sprintf("\033[0;34mDEBUG:\033[0m %s", msg)
 	log.Println(line)
 }

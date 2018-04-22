@@ -98,14 +98,19 @@ func isPrivateAddr(addr net.IP) bool {
 	return false
 }
 
-func probeNetwork(graph Graph, network string) {
+func probeNetwork(graph Graph, network string, config Configuration) {
 	logInfo(fmt.Sprintf("Probing network: %s", network))
-	scanner, err := InitScanner(network)
+	scanner, err := InitScanner(network, config.Discovery.Debug)
 	if err != nil {
 		return
 	}
-	args := []string{"-sn"}
-	scanner.SetRawInput(args)
+	if config.Discovery.Mode == "ping" {
+		logInfo(fmt.Sprintf("Using ping mode on network %s", network))
+		scanner.SetPingDiscovery()
+	} else if config.Discovery.Mode == "stealth" {
+		logInfo(fmt.Sprintf("Using stealth mode on network %s", network))
+		scanner.SetStealthDiscovery()
+	}
 	scanner.RunScan()
 	if !scanner.Failed {
 		numHosts := len(scanner.Results.Hosts)
@@ -120,7 +125,7 @@ func localNetworkDiscovery(addr net.IP, graph Graph, config Configuration) {
 	for _, netw := range config.Discovery.Networks {
 		logInfo(fmt.Sprintf("Adding %s to memory graph", netw))
 		graph.AddNetwork(netw)
-		go probeNetwork(graph, netw)
+		go probeNetwork(graph, netw, config)
 	}
 	networks, err := detectLocalNetworks(addr)
 	if err != nil {
@@ -130,7 +135,7 @@ func localNetworkDiscovery(addr net.IP, graph Graph, config Configuration) {
 			networkString := fmt.Sprintf("%s/%s", network.IP.String(), DEFAULT_ASSUMED_NETMASK)
 			logInfo(fmt.Sprintf("Adding %s to memory graph", networkString))
 			graph.AddNetwork(networkString)
-			go probeNetwork(graph, networkString)
+			go probeNetwork(graph, networkString, config)
 		}
 	}
 }

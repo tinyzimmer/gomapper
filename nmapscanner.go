@@ -39,6 +39,7 @@ type Scanner struct {
 	Results      *NmapRun
 	Error        ErrorResponse
 	Failed       bool
+	Debug        bool
 }
 
 type ErrorResponse struct {
@@ -46,11 +47,12 @@ type ErrorResponse struct {
 	Stderr string
 }
 
-func InitScanner(target string) (Scanner, error) {
+func InitScanner(target string, debug bool) (Scanner, error) {
 	scanner := Scanner{}
 	scanner.SetTarget(target)
 	scanner.Failed = false
 	scanner.SetExec("nmap")
+	scanner.SetDebug(debug)
 	xml, err := getOutXml()
 	if err != nil {
 		err := errors.New("Could not initiate scanner")
@@ -60,6 +62,10 @@ func InitScanner(target string) (Scanner, error) {
 	return scanner, nil
 }
 
+func (s *Scanner) SetDebug(debug bool) {
+	s.Debug = debug
+}
+
 func (s *Scanner) SetHelperInput() {
 	s.RawEnforce = false
 }
@@ -67,6 +73,17 @@ func (s *Scanner) SetHelperInput() {
 func (s *Scanner) SetRawInput(args []string) {
 	s.RawEnforce = true
 	s.RawArgs = args
+}
+
+func (s *Scanner) SetStealthDiscovery() {
+	s.RawEnforce = true
+	s.RawArgs = append(s.RawArgs, "-P0")
+	s.RawArgs = append(s.RawArgs, "-sS")
+}
+
+func (s *Scanner) SetPingDiscovery() {
+	s.RawEnforce = true
+	s.RawArgs = append(s.RawArgs, "-sn")
 }
 
 func (s *Scanner) SetExec(executable string) {
@@ -93,6 +110,9 @@ func (s *Scanner) RunHelperScan() {
 		s.HandleReturn(err, "", "")
 	} else {
 		cmd := exec.Command(s.Executable, args...)
+		if s.Debug {
+			logDebug(fmt.Sprint(cmd))
+		}
 		cmd.Stdout = stdout
 		cmd.Stderr = stderr
 		err := cmd.Run()
@@ -106,6 +126,9 @@ func (s *Scanner) RunRawArgScan() {
 	rawArgs = append(rawArgs, s.Xml)
 	rawArgs = append(rawArgs, s.Target)
 	cmd := exec.Command(s.Executable, rawArgs...)
+	if s.Debug {
+		logDebug(fmt.Sprint(cmd))
+	}
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	err := cmd.Run()

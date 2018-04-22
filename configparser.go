@@ -37,6 +37,7 @@ type DiscoveryConfig struct {
 	Enabled  bool
 	Mode     string
 	Networks []string
+	Debug    bool
 }
 
 func getConfig(configFile *string) (config Configuration, err error) {
@@ -67,5 +68,6 @@ func getDefaultConfig() (config Configuration) {
 	config.Server.ListenPort = "8080"
 	config.Discovery.Enabled = true
 	config.Discovery.Mode = "ping"
+	config.Discovery.Debug = false
 	return
 }
