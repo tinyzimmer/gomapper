@@ -77,7 +77,7 @@ The configurations that can be passed via the environment are below:
 
 |Environment Variable|Options|Default|
 |----------|:-------------:|------:|
-|GOMAPPER_LISTEN_ADDRESS|ip address|127.0.0.1|
+|GOMAPPER_LISTEN_ADDRESS|ip address|First non-local interface found|
 |GOMAPPER_LISTEN_PORT|port|8080|
 |GOMAPPER_DISCOVERY_ENABLED|0,1,false,true|true|
 |GOMAPPER_DISCOVERY_MODE|ping,stealth,connect|ping|

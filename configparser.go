@@ -113,7 +113,12 @@ func undefined(value string) bool {
 
 func getDefault(config string) (value string) {
 	if config == "listenAddress" {
-		value = "127.0.0.1"
+		addr, err := getAddr()
+		if err != nil {
+			value = "127.0.0.1"
+		} else {
+			value = addr.String()
+		}
 	}
 	if config == "listenPort" {
 		value = "8080"
