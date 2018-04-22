@@ -84,7 +84,7 @@ func destAddr(dest string) (destAddr [4]byte, err error) {
 }
 
 func isPrivateAddr(addr net.IP) bool {
-	var private_nets = [4]string{"192.168.0.0/8", "10.0.0.0/8", "172.0.0.0/8", "127.0.0.0/24"}
+	var private_nets = [4]string{"192.168.0.0/16", "10.0.0.0/8", "172.0.0.0/8", "127.0.0.0/24"}
 	for _, network := range private_nets {
 		_, ipnet, err := net.ParseCIDR(network)
 		if err != nil {
