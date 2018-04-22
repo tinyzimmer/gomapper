@@ -79,7 +79,6 @@ func (g Graph) AddScanResultsByNetwork(network string, results *NmapRun) {
 					g.AddHost(formatDefault, address.Addr)
 					logInfo(fmt.Sprintf("Added %s to memory graph under %s", address.Addr, formatDefault))
 				}
-
 			}
 		}
 	}
