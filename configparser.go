@@ -19,6 +19,8 @@ package main
 
 import (
 	"io/ioutil"
+	"os"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 )
@@ -46,7 +48,7 @@ func getConfig(configFile *string) (config Configuration, err error) {
 		config, err = decodeConfigurationFile(configFileValue)
 		return
 	}
-	config = getDefaultConfig()
+	config = parseEnvironmentConfiguration()
 	return
 }
 
@@ -60,14 +62,64 @@ func decodeConfigurationFile(configFile string) (config Configuration, err error
 }
 
 func parseEnvironmentConfiguration() (config Configuration) {
+	config.Server.ListenAddress = os.Getenv("GOMAPPER_LISTEN_ADDRESS")
+	config.Server.ListenPort = os.Getenv("GOMAPPER_LISTEN_PORT")
+	config.Discovery.Enabled = checkEnvBool(os.Getenv("GOMAPPER_DISCOVERY_ENABLED"), true)
+	config.Discovery.Mode = os.Getenv("GOMAPPER_DISCOVERY_MODE")
+	config.Discovery.Debug = checkEnvBool(os.Getenv("GOMAPPER_DISCOVERY_DEBUG"), false)
+	config.Discovery.Networks = checkEnvNetworks(os.Getenv("GOMAPPER_DISCOVERY_NETWORKS"))
+	if undefined(config.Server.ListenAddress) {
+		config.Server.ListenAddress = getDefault("listenAddress")
+	}
+	if undefined(config.Server.ListenPort) {
+		config.Server.ListenPort = getDefault("listenPort")
+	}
+	if undefined(config.Discovery.Mode) {
+		config.Discovery.Mode = getDefault("discoveryMode")
+	}
 	return
 }
 
-func getDefaultConfig() (config Configuration) {
-	config.Server.ListenAddress = "127.0.0.1"
-	config.Server.ListenPort = "8080"
-	config.Discovery.Enabled = true
-	config.Discovery.Mode = "ping"
-	config.Discovery.Debug = false
+func checkEnvNetworks(value string) (networks []string) {
+	if value == "" {
+		return
+	}
+	networks = strings.Split(value, ",")
+	return
+}
+
+func checkEnvBool(value string, def bool) bool {
+	if value == "0" {
+		return false
+	}
+	if value == "1" {
+		return true
+	}
+	if value == "false" {
+		return false
+	}
+	if value == "true" {
+		return true
+	}
+	return def
+}
+
+func undefined(value string) bool {
+	if value == "" {
+		return true
+	}
+	return false
+}
+
+func getDefault(config string) (value string) {
+	if config == "listenAddress" {
+		value = "127.0.0.1"
+	}
+	if config == "listenPort" {
+		value = "8080"
+	}
+	if config == "discoveryMode" {
+		value = "ping"
+	}
 	return
 }
