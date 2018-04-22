@@ -79,6 +79,7 @@ func (g Graph) receivedScan(w http.ResponseWriter, req *http.Request) {
 }
 
 func (g Graph) IterateNetworks(w http.ResponseWriter, req *http.Request) {
+	logRequest(req)
 	hosts := make(map[string]*GraphedNetwork)
 	subnets := g.GetSubnets()
 	for _, subnet := range subnets {
