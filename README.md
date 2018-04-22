@@ -200,7 +200,7 @@ $> curl localhost:8080/scan -d '{"target": "127.0.0.1", "method": "udp", "script
             },
             ...
 }
-$> curl localhost:8080/query
+$> curl localhost:8080/query # will eventually contain service/port discovery information
 {
     "10.0.1.0/24": {
         "Hosts": [
