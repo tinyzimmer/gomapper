@@ -12,7 +12,7 @@ To build the docker container which will include an nmap installation:
 ## Build Dependencies
 * internet connection (required)
 * docker (required)
-* golang (required)
+* golang >=1.10 (required)
 * upx (optional) - golang binaries apparently compress a crapload
 
 ## Build/Pull
