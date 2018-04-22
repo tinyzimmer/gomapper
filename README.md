@@ -84,6 +84,8 @@ The configurations that can be passed via the environment are below:
 |GOMAPPER_DISCOVERY_NETWORKS|comma separated list of networks or ip addresses|none|
 |GOMAPPER_DISCOVERY_DEBUG|0,1,false,true|false|
 
+Network discovery by default will only act on private networks. Override this behavior by specifying additional networks
+
 ## Commands
 
 ```bash
