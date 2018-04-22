@@ -86,6 +86,11 @@ func (s *Scanner) SetPingDiscovery() {
 	s.RawArgs = append(s.RawArgs, "-sn")
 }
 
+func (s *Scanner) SetConnectDiscovery() {
+	s.RawEnforce = true
+	s.RawArgs = append(s.RawArgs, "-sT")
+}
+
 func (s *Scanner) SetExec(executable string) {
 	s.Executable = executable
 }

@@ -110,6 +110,8 @@ func probeNetwork(graph Graph, network string, config Configuration) {
 	} else if config.Discovery.Mode == "stealth" {
 		logInfo(fmt.Sprintf("Using stealth mode on network %s", network))
 		scanner.SetStealthDiscovery()
+	} else if config.Discovery.Mode == "connect" {
+		scanner.SetConnectDiscovery()
 	}
 	scanner.RunScan()
 	if !scanner.Failed {
