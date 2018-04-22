@@ -104,11 +104,10 @@ func probeNetwork(graph Graph, network string, config Configuration) {
 	if err != nil {
 		return
 	}
+	logInfo(fmt.Sprintf("Using %s mode on network %s", config.Discovery.Mode, network))
 	if config.Discovery.Mode == "ping" {
-		logInfo(fmt.Sprintf("Using ping mode on network %s", network))
 		scanner.SetPingDiscovery()
 	} else if config.Discovery.Mode == "stealth" {
-		logInfo(fmt.Sprintf("Using stealth mode on network %s", network))
 		scanner.SetStealthDiscovery()
 	} else if config.Discovery.Mode == "connect" {
 		scanner.SetConnectDiscovery()
