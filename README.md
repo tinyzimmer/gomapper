@@ -82,6 +82,7 @@ The configurations that can be passed via the environment are below:
 |GOMAPPER_DISCOVERY_ENABLED|0,1,false,true|true|
 |GOMAPPER_DISCOVERY_MODE|ping,stealth,connect|ping|
 |GOMAPPER_DISCOVERY_NETWORKS|comma separated list of networks or ip addresses|none|
+|GOMAPPER_DISCOVERY_DEBUG|0,1,false,true|false|
 
 ## Commands
 
