@@ -1,0 +1,9 @@
+[server]
+listen = "127.0.0.1"
+port = "8080"
+
+[discovery]
+enabled = true
+mode = "ping"
+networks = [ "10.0.1.0/24" ]
+debug = true

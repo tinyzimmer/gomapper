@@ -63,6 +63,28 @@ And from the client
 
 Eventually more information will get transparently stored in memory from various probes
 
+## Configuration
+
+Configuration is done either via a config.toml or environment variables.
+
+See the included example configuration file. These are for use outside the container and can be specified with:
+
+```bash
+$> gomapper --config /path/to/config.toml
+```
+
+The configurations that can be passed via the environment are below:
+
+|Environment Variable|Options|Default|
+|----------|:-------------:|------:|
+|GOMAPPER_LISTEN_ADDRESS|ip address|127.0.0.1|
+|GOMAPPER_LISTEN_PORT|port|8080|
+|GOMAPPER_DISCOVERY_ENABLED|0,1,false,true|true|
+|GOMAPPER_DISCOVERY_MODE|ping,stealth,connect|ping|
+|GOMAPPER_DISCOVERY_NETWORKS|comma separated list of networks or ip addresses|none|
+
+## Commands
+
 ```bash
 $> # Start the service via the command line or docker
 $> docker run -p 8080:8080 tinyzimmer/gomapper
