@@ -25,7 +25,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"strconv"
 )
 
 type Scanner struct {
@@ -63,6 +62,9 @@ func InitScanner(target string, debug bool) (Scanner, error) {
 }
 
 func (s *Scanner) SetDebug(debug bool) {
+	if debug {
+		logDebug("Initializing scanner with debug")
+	}
 	s.Debug = debug
 }
 
@@ -147,7 +149,7 @@ func (s *Scanner) HandleReturn(err error, stdout string, stderr string) {
 	} else {
 		results := ParseRun(s.Xml)
 		s.Results = results
-		logInfo(fmt.Sprintf("Scan completed in %s seconds", strconv.FormatFloat(results.RunStats.Finished.Elapsed, 'g', 4, 64)))
+		logInfo(fmt.Sprintf("Scan completed in %s seconds", floatToString(results.RunStats.Finished.Elapsed)))
 	}
 }
 

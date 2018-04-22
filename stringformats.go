@@ -19,25 +19,25 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"strconv"
 )
 
-func logError(msg string) {
-	line := fmt.Sprintf("%s %s", colorRed("ERROR"), msg)
-	log.Println(line)
+func floatToString(value float64) string {
+	return strconv.FormatFloat(value, 'g', 4, 64)
 }
 
-func logInfo(msg string) {
-	line := fmt.Sprintf("%s %s", colorGreen("INFO"), msg)
-	log.Println(line)
+func colorRed(value string) string {
+	return fmt.Sprintf("\033[0;31m%s\033[0m", value)
 }
 
-func logWarn(msg string) {
-	line := fmt.Sprintf("%s %s", colorYellow("WARNING"), msg)
-	log.Println(line)
+func colorGreen(value string) string {
+	return fmt.Sprintf("\033[0;32m%s\033[0m", value)
 }
 
-func logDebug(msg string) {
-	line := fmt.Sprintf("%s %s", colorBlue("DEBUG"), msg)
-	log.Println(line)
+func colorYellow(value string) string {
+	return fmt.Sprintf("\033[0;33m%s\033[0m", value)
+}
+
+func colorBlue(value string) string {
+	return fmt.Sprintf("\033[0;34m%s\033[0m", value)
 }
