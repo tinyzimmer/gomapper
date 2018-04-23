@@ -120,8 +120,6 @@ func probeNetwork(db MemoryDatabase, network string, config Configuration) {
 	} else {
 		logError(fmt.Sprintf("Scan of %s failed", network))
 	}
-	savedNetworks := db.GetAllNetworks()
-	fmt.Println(savedNetworks)
 }
 
 func localNetworkDiscovery(addr net.IP, db MemoryDatabase, config Configuration) {
