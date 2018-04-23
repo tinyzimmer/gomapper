@@ -164,14 +164,3 @@ func SetupNetworkDiscovery() (addr net.IP, db MemoryDatabase, err error) {
 	}
 	return
 }
-
-func netContains(slice []net.IPNet, item net.IPNet) bool {
-	set := make(map[string]struct{}, len(slice))
-	for _, s := range slice {
-		netStr := s.String()
-		set[netStr] = struct{}{}
-	}
-	itemStr := item.String()
-	_, ok := set[itemStr]
-	return ok
-}
