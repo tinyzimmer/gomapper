@@ -24,10 +24,10 @@ import (
 	"net/http"
 )
 
-func startHttpListener(addr net.IP, port string, graph Graph) {
+func startHttpListener(addr net.IP, port string, db MemoryDatabase) {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/scan", graph.receivedScan)
-	mux.HandleFunc("/query", graph.IterateNetworks)
+	mux.HandleFunc("/scan", db.receivedScan)
+	mux.HandleFunc("/query", db.IterateNetworks)
 	if isPrivateAddr(addr) {
 		logInfo(fmt.Sprintf("Listening on private address: %s:%s", addr, port))
 	} else {
@@ -46,9 +46,9 @@ func main() {
 	}
 	addr := getIpObj(config.Server.ListenAddress)
 	port := config.Server.ListenPort
-	localAddr, graph, err := setupNetworkDiscovery()
+	localAddr, db, err := setupNetworkDiscovery()
 	if err == nil && config.Discovery.Enabled {
-		go localNetworkDiscovery(localAddr, graph, config)
+		go localNetworkDiscovery(localAddr, db, config)
 	}
-	startHttpListener(addr, port, graph)
+	startHttpListener(addr, port, db)
 }

@@ -98,7 +98,7 @@ func isPrivateAddr(addr net.IP) bool {
 	return false
 }
 
-func probeNetwork(graph Graph, network string, config Configuration) {
+func probeNetwork(db MemoryDatabase, network string, config Configuration) {
 	logInfo(fmt.Sprintf("Probing network: %s", network))
 	scanner, err := InitScanner(network, config.Discovery.Debug)
 	if err != nil {
@@ -116,17 +116,19 @@ func probeNetwork(graph Graph, network string, config Configuration) {
 	if !scanner.Failed {
 		numHosts := len(scanner.Results.Hosts)
 		logInfo(fmt.Sprintf("Probe of %s complete. Found %v hosts", network, numHosts))
-		graph.AddScanResultsByNetwork(network, scanner.Results)
+		db.AddScanResultsByNetwork(network, scanner.Results)
 	} else {
 		logError(fmt.Sprintf("Scan of %s failed", network))
 	}
+	savedNetworks := db.GetAllNetworks()
+	fmt.Println(savedNetworks)
 }
 
-func localNetworkDiscovery(addr net.IP, graph Graph, config Configuration) {
+func localNetworkDiscovery(addr net.IP, db MemoryDatabase, config Configuration) {
 	for _, netw := range config.Discovery.Networks {
-		logInfo(fmt.Sprintf("Adding %s to memory graph", netw))
-		graph.AddNetwork(netw)
-		go probeNetwork(graph, netw, config)
+		logInfo(fmt.Sprintf("Adding %s to memory database", netw))
+		db.AddNetwork(netw)
+		go probeNetwork(db, netw, config)
 	}
 	networks, err := detectLocalNetworks(addr)
 	if err != nil {
@@ -134,9 +136,9 @@ func localNetworkDiscovery(addr net.IP, graph Graph, config Configuration) {
 	} else {
 		for _, network := range networks {
 			networkString := fmt.Sprintf("%s/%s", network.IP.String(), DEFAULT_ASSUMED_NETMASK)
-			logInfo(fmt.Sprintf("Adding %s to memory graph", networkString))
-			graph.AddNetwork(networkString)
-			go probeNetwork(graph, networkString, config)
+			logInfo(fmt.Sprintf("Adding %s to memory database", networkString))
+			db.AddNetwork(networkString)
+			go probeNetwork(db, networkString, config)
 		}
 	}
 }
@@ -145,14 +147,14 @@ func notifyDiscoveryDisabled() {
 	logWarn("Network discovery is disabled")
 }
 
-func setupNetworkDiscovery() (addr net.IP, graph Graph, err error) {
+func setupNetworkDiscovery() (addr net.IP, db MemoryDatabase, err error) {
 	addr, err = getAddr()
 	if err != nil {
 		logError(err.Error())
 		notifyDiscoveryDisabled()
 		return
 	}
-	graph, err = getMemoryGraph()
+	db, err = getMemoryDatabase()
 	if err != nil {
 		logError(err.Error())
 		notifyDiscoveryDisabled()

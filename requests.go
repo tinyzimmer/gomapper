@@ -24,10 +24,6 @@ import (
 	"net/http"
 )
 
-type GraphedNetwork struct {
-	Hosts []string
-}
-
 func logRequest(req *http.Request) {
 	msg := fmt.Sprintf("%s : %s %s : %s", req.RemoteAddr, req.Method, req.Proto, req.RequestURI)
 	logInfo(fmt.Sprintf("Received Request: %s", msg))
@@ -41,7 +37,7 @@ func formatResponse(data interface{}) (string, error) {
 	return string(dumped) + "\n", nil
 }
 
-func (g Graph) receivedScan(w http.ResponseWriter, req *http.Request) {
+func (db MemoryDatabase) receivedScan(w http.ResponseWriter, req *http.Request) {
 	logRequest(req)
 	decoder := json.NewDecoder(req.Body)
 	input := &ReqInput{}
@@ -71,27 +67,16 @@ func (g Graph) receivedScan(w http.ResponseWriter, req *http.Request) {
 		io.WriteString(w, response)
 	} else {
 		logInfo("Adding scan results to graph")
-		g.AddScanResultsByNetwork("", scanner.Results)
+		db.AddScanResultsByNetwork("", scanner.Results)
 		logInfo("Returning scan results")
 		response, _ := formatResponse(scanner.Results)
 		io.WriteString(w, response)
 	}
 }
 
-func (g Graph) IterateNetworks(w http.ResponseWriter, req *http.Request) {
+func (db MemoryDatabase) IterateNetworks(w http.ResponseWriter, req *http.Request) {
 	logRequest(req)
-	hosts := make(map[string]*GraphedNetwork)
-	subnets := g.GetSubnets()
-	for _, subnet := range subnets {
-		_, ok := hosts[subnet]
-		if !ok {
-			network := &GraphedNetwork{}
-			hosts[subnet] = network
-		}
-	}
-	for subnet, graphedNetwork := range hosts {
-		graphedNetwork.Hosts = g.GetHostsBySubnet(subnet)
-	}
-	response, _ := formatResponse(hosts)
+	data := db.GetAllNetworks()
+	response, _ := formatResponse(data)
 	io.WriteString(w, response)
 }

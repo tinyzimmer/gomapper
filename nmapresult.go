@@ -74,7 +74,7 @@ type Ports struct {
 
 type Port struct {
 	Protocol string  `xml:"protocol,attr"`
-	PortId   int     `xml:"portid,attr"`
+	PortId   string  `xml:"portid,attr"`
 	State    Status  `xml:"state"`
 	Service  Service `xml:"service"`
 	Script   Script  `xml:"script"`
