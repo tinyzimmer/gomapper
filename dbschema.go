@@ -69,8 +69,8 @@ func getMemoryDatabase() (MemoryDatabase, error) {
 func (d MemoryDatabase) AddScanResultsByNetwork(network string, results *NmapRun) {
 	txn := d.Session.Txn(true)
 	defer txn.Abort()
-	net := d.GetNetwork(network)
-	if net == nil {
+	net, err := d.GetNetwork(network)
+	if net == nil || err != nil {
 		net = &Network{}
 		net.Subnet = network
 	}
@@ -94,12 +94,16 @@ func (d MemoryDatabase) AddScanResultsByNetwork(network string, results *NmapRun
 	}
 }
 
-func (d MemoryDatabase) GetNetwork(network string) (result *Network) {
+func (d MemoryDatabase) GetNetwork(network string) (result *Network, err error) {
 	txn := d.Session.Txn(false)
 	defer txn.Abort()
 	raw, err := txn.First("network", "id", network)
 	if err != nil {
 		logError(err.Error())
+		return
+	}
+	if raw == nil {
+		return
 	}
 	result = raw.(*Network)
 	return

@@ -67,7 +67,7 @@ func (db MemoryDatabase) receivedScan(w http.ResponseWriter, req *http.Request) 
 		io.WriteString(w, response)
 	} else {
 		logInfo("Adding scan results to graph")
-		db.AddScanResultsByNetwork("", scanner.Results)
+		db.AddScanResultsByNetwork(scanner.Target, scanner.Results)
 		logInfo("Returning scan results")
 		response, _ := formatResponse(scanner.Results)
 		io.WriteString(w, response)
