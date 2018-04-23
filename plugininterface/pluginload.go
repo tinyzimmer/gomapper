@@ -18,6 +18,7 @@
 package plugininterface
 
 import (
+	"errors"
 	"fmt"
 	"plugin"
 
@@ -32,11 +33,6 @@ type LoadedPlugins struct {
 type GomapperPlugin struct {
 	Name            string
 	SymbolInterface *plugin.Plugin
-	PluginInterface PluginInterface
-}
-
-type PluginInterface interface {
-	OnScanComplete()
 }
 
 func LoadPlugins(plugins []string) (loadedPlugins LoadedPlugins) {
@@ -58,18 +54,19 @@ func LoadPlugins(plugins []string) (loadedPlugins LoadedPlugins) {
 	return
 }
 
-func (g GomapperPlugin) OnScanComplete(nmapRun *nmapresult.NmapRun) {
+func (g GomapperPlugin) OnScanComplete(nmapRun *nmapresult.NmapRun, db interface{}) {
 	run, err := g.SymbolInterface.Lookup("OnScanComplete")
 	if err != nil {
 		logging.LogWarn(g.formatError(err))
 		return
 	}
-	runFunc, ok := run.(func(*nmapresult.NmapRun) error)
+	runFunc, ok := run.(func(*nmapresult.NmapRun, interface{}) error)
 	if !ok {
-		logging.LogError("bad implementation")
+		err := errors.New("Bad OnScanComplete implementation")
+		logging.LogError(g.formatError(err))
 		return
 	}
-	if err := runFunc(nmapRun); err != nil {
+	if err := runFunc(nmapRun, db); err != nil {
 		logging.LogError(g.formatError(err))
 	}
 	return

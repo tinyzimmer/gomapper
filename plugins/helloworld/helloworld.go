@@ -19,14 +19,21 @@ package main
 
 import (
 	"fmt"
+	"github.com/tinyzimmer/gomapper/gomapperdb"
 	"github.com/tinyzimmer/gomapper/nmapresult"
 )
+
+type DatabaseConnector interface{}
 
 func init() {
 	fmt.Println("I was loaded")
 }
 
-func OnScanComplete(*nmapresult.NmapRun) error {
+func OnScanComplete(nmapRun *nmapresult.NmapRun, db interface{}) error {
 	fmt.Println("I saw that")
+	_, ok := db.(gomapperdb.MemoryDatabase)
+	if !ok {
+		fmt.Println("Invalid database")
+	}
 	return nil
 }
