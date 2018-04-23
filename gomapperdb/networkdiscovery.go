@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"net"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/tinyzimmer/gomapper/config"
@@ -133,7 +132,7 @@ func LocalNetworkDiscovery(addr net.IP, db MemoryDatabase, config config.Configu
 		db.AddNetwork(netw)
 		go probeNetwork(db, netw, config)
 	}
-	networks, err := detectLocalNetworks(addr)
+	networks, err := netutils.DetectLocalNetworks(addr)
 	if err != nil {
 		logging.LogError("Could not detect local networks. Discovery is disabled.")
 	} else {
@@ -175,71 +174,4 @@ func netContains(slice []net.IPNet, item net.IPNet) bool {
 	itemStr := item.String()
 	_, ok := set[itemStr]
 	return ok
-}
-
-func detectLocalNetworks(addr net.IP) ([]net.IPNet, error) {
-	var networks []net.IPNet
-	destAddr, err := destAddr(DEFAULT_PING_HOST)
-	if err != nil {
-		logging.LogError(fmt.Sprintf("Trace Detection Error: %s", err.Error()))
-		return networks, err
-	}
-	var sourceAddr [4]byte
-	copy(sourceAddr[:], addr.To4())
-	timeoutMs := (int64)(DEFAULT_TIMEOUT_MS)
-	tv := syscall.NsecToTimeval(1000 * 1000 * timeoutMs)
-	ttl := 1
-	retry := 0
-	for {
-		recvSocket, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_RAW, syscall.IPPROTO_ICMP)
-		if err != nil {
-			logging.LogWarn("Could not create raw socket for ping probe, are you running in the docker container? If not, do that, or try root.")
-			logging.LogWarn(fmt.Sprintf("Traceroute Detection Error: %s", err.Error()))
-			return networks, err
-		}
-		sendSocket, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_DGRAM, syscall.IPPROTO_UDP)
-		if err != nil {
-			logging.LogWarn(fmt.Sprintf("Traceroute Detection Error: %s", err.Error()))
-			return networks, err
-		}
-		syscall.SetsockoptInt(sendSocket, 0x0, syscall.IP_TTL, ttl)
-		syscall.SetsockoptTimeval(recvSocket, syscall.SOL_SOCKET, syscall.SO_RCVTIMEO, &tv)
-
-		defer syscall.Close(recvSocket)
-		defer syscall.Close(sendSocket)
-
-		syscall.Bind(recvSocket, &syscall.SockaddrInet4{Port: DEFAULT_PORT, Addr: sourceAddr})
-
-		syscall.Sendto(sendSocket, []byte{0x0}, 0, &syscall.SockaddrInet4{Port: DEFAULT_PORT, Addr: destAddr})
-
-		var p = make([]byte, DEFAULT_PACKET_SIZE)
-		_, from, err := syscall.Recvfrom(recvSocket, p, 0)
-		if err == nil {
-			currAddr := from.(*syscall.SockaddrInet4).Addr
-			netObj := net.IPv4(currAddr[0], currAddr[1], currAddr[2], byte(0))
-			if isPrivateAddr(netObj) {
-				network := net.IPNet{IP: netObj, Mask: net.IPv4Mask(255, 255, 255, 0)}
-				if !netContains(networks, network) {
-					networks = append(networks, network)
-					logging.LogInfo(fmt.Sprintf("Local Network Detected: %s/%s", network.IP, DEFAULT_ASSUMED_NETMASK))
-				}
-			}
-			ttl += 1
-			retry = 0
-			if ttl > DEFAULT_MAX_HOPS || currAddr == destAddr {
-				return networks, nil
-			}
-		} else {
-			retry += 1
-			if retry > DEFAULT_MAX_RETRIES {
-				ttl += 1
-				retry = 0
-			}
-
-			if ttl > DEFAULT_MAX_HOPS {
-				return networks, nil
-			}
-		}
-	}
-	return networks, nil
 }
