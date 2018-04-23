@@ -37,17 +37,19 @@ type GomapperPlugin struct {
 
 func LoadPlugins(plugins []string) (loadedPlugins LoadedPlugins) {
 	for _, mod := range plugins {
-		pluginFile := fmt.Sprintf("plugins/%s/%s.so", mod, mod)
-		p, err := plugin.Open(pluginFile)
-		if err != nil {
-			logging.LogError(err.Error())
-		} else {
-			loadedPlugin := &GomapperPlugin{}
-			loadedPlugin.Name = mod
-			loadedPlugin.Interface = p
-			loadedPlugin.checkInterfaces()
-			loadedPlugins.Plugins = append(loadedPlugins.Plugins, loadedPlugin)
-			logging.LogInfo(fmt.Sprintf("Loaded plugin: %s", mod))
+		if mod != "" {
+			pluginFile := fmt.Sprintf("plugins/%s/%s.so", mod, mod)
+			p, err := plugin.Open(pluginFile)
+			if err != nil {
+				logging.LogError(err.Error())
+			} else {
+				loadedPlugin := &GomapperPlugin{}
+				loadedPlugin.Name = mod
+				loadedPlugin.Interface = p
+				loadedPlugin.checkInterfaces()
+				loadedPlugins.Plugins = append(loadedPlugins.Plugins, loadedPlugin)
+				logging.LogInfo(fmt.Sprintf("Loaded plugin: %s", mod))
+			}
 		}
 	}
 	return
