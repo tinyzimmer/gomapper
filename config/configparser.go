@@ -15,7 +15,7 @@
     along with gomapper.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-package main
+package config
 
 import (
 	"io/ioutil"
@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/tinyzimmer/gomapper/netutils"
 )
 
 type Configuration struct {
@@ -42,7 +43,7 @@ type DiscoveryConfig struct {
 	Debug    bool
 }
 
-func getConfig(configFile *string) (config Configuration, err error) {
+func GetConfig(configFile *string) (config Configuration, err error) {
 	configFileValue := *configFile
 	if configFileValue != "" {
 		config, err = decodeConfigurationFile(configFileValue)
@@ -113,7 +114,7 @@ func undefined(value string) bool {
 
 func getDefault(config string) (value string) {
 	if config == "listenAddress" {
-		addr, err := getAddr()
+		addr, err := netutils.GetAddr()
 		if err != nil {
 			value = "127.0.0.1"
 		} else {

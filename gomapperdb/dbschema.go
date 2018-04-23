@@ -15,11 +15,15 @@
     along with gomapper.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-package main
+package gomapperdb
 
 import (
 	"fmt"
+
 	"github.com/hashicorp/go-memdb"
+	"github.com/tinyzimmer/gomapper/logging"
+	"github.com/tinyzimmer/gomapper/netutils"
+	"github.com/tinyzimmer/gomapper/nmapresult"
 )
 
 type Network struct {
@@ -42,7 +46,7 @@ type MemoryDatabase struct {
 	Session *memdb.MemDB
 }
 
-func getMemoryDatabase() (MemoryDatabase, error) {
+func GetMemoryDatabase() (MemoryDatabase, error) {
 	database := MemoryDatabase{}
 	schema := &memdb.DBSchema{
 		Tables: map[string]*memdb.TableSchema{
@@ -66,7 +70,7 @@ func getMemoryDatabase() (MemoryDatabase, error) {
 	return database, nil
 }
 
-func (d MemoryDatabase) AddScanResultsByNetwork(network string, results *NmapRun) {
+func (d MemoryDatabase) AddScanResultsByNetwork(network string, results *nmapresult.NmapRun) {
 	txn := d.Session.Txn(true)
 	defer txn.Abort()
 	net, err := d.GetNetwork(network)
@@ -88,7 +92,7 @@ func (d MemoryDatabase) AddScanResultsByNetwork(network string, results *NmapRun
 		net.Hosts = append(net.Hosts, dbHost)
 	}
 	if err := txn.Insert("network", net); err != nil {
-		logError(err.Error())
+		logging.LogError(err.Error())
 	} else {
 		txn.Commit()
 	}
@@ -99,7 +103,7 @@ func (d MemoryDatabase) GetNetwork(network string) (result *Network, err error) 
 	defer txn.Abort()
 	raw, err := txn.First("network", "id", network)
 	if err != nil {
-		logError(err.Error())
+		logging.LogError(err.Error())
 		return
 	}
 	if raw == nil {
@@ -132,7 +136,7 @@ func (d MemoryDatabase) AddNetwork(network string) {
 	n := &Network{}
 	n.Subnet = network
 	if err := txn.Insert("network", n); err != nil {
-		logError(err.Error())
+		logging.LogError(err.Error())
 	} else {
 		txn.Commit()
 	}
@@ -140,7 +144,7 @@ func (d MemoryDatabase) AddNetwork(network string) {
 
 func checkError(err error) {
 	if err != nil {
-		logError(err.Error())
+		logging.LogError(err.Error())
 	}
 }
 
@@ -148,12 +152,12 @@ func checkDbNetwork(network string, ip string) (subnet string) {
 	if network != "" {
 		subnet = network
 	} else {
-		subnet = formatDefaultNetmask(ip)
+		subnet = netutils.FormatDefaultNetmask(ip)
 	}
 	return
 }
 
-func getScanAddrs(addrs []Address) (ip string, mac string) {
+func getScanAddrs(addrs []nmapresult.Address) (ip string, mac string) {
 	for _, addr := range addrs {
 		if addr.AddrType == "ipv4" {
 			ip = addr.Addr

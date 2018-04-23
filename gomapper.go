@@ -22,16 +22,21 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+
+	"github.com/tinyzimmer/gomapper/config"
+	"github.com/tinyzimmer/gomapper/gomapperdb"
+	"github.com/tinyzimmer/gomapper/logging"
+	"github.com/tinyzimmer/gomapper/netutils"
 )
 
-func startHttpListener(addr net.IP, port string, db MemoryDatabase) {
+func startHttpListener(addr net.IP, port string, db gomapperdb.MemoryDatabase) {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/scan", db.receivedScan)
+	mux.HandleFunc("/scan", db.ReceivedScan)
 	mux.HandleFunc("/query", db.IterateNetworks)
-	if isPrivateAddr(addr) {
-		logInfo(fmt.Sprintf("Listening on private address: %s:%s", addr, port))
+	if netutils.IsPrivateAddr(addr) {
+		logging.LogInfo(fmt.Sprintf("Listening on private address: %s:%s", addr, port))
 	} else {
-		logInfo(fmt.Sprintf("Listening on public address %s:%s", addr, port))
+		logging.LogInfo(fmt.Sprintf("Listening on public address %s:%s", addr, port))
 	}
 	http.ListenAndServe(fmt.Sprintf("%s:%s", addr, port), mux)
 }
@@ -39,16 +44,16 @@ func startHttpListener(addr net.IP, port string, db MemoryDatabase) {
 func main() {
 	var configFile = flag.String("config", "", "toml configuration file")
 	flag.Parse()
-	config, err := getConfig(configFile)
+	config, err := config.GetConfig(configFile)
 	if err != nil {
-		logError(err.Error())
+		logging.LogError(err.Error())
 		return
 	}
-	addr := getIpObj(config.Server.ListenAddress)
+	addr := netutils.GetIpObj(config.Server.ListenAddress)
 	port := config.Server.ListenPort
-	localAddr, db, err := setupNetworkDiscovery()
+	localAddr, db, err := gomapperdb.SetupNetworkDiscovery()
 	if err == nil && config.Discovery.Enabled {
-		go localNetworkDiscovery(localAddr, db, config)
+		go gomapperdb.LocalNetworkDiscovery(localAddr, db, config)
 	}
 	startHttpListener(addr, port, db)
 }

@@ -15,29 +15,29 @@
     along with gomapper.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-package main
+package formats
 
 import (
 	"fmt"
 	"strconv"
 )
 
-func floatToString(value float64) string {
+func FloatToString(value float64) string {
 	return strconv.FormatFloat(value, 'g', 4, 64)
 }
 
-func colorRed(value string) string {
+func ColorRed(value string) string {
 	return fmt.Sprintf("\033[0;31m%s\033[0m", value)
 }
 
-func colorGreen(value string) string {
+func ColorGreen(value string) string {
 	return fmt.Sprintf("\033[0;32m%s\033[0m", value)
 }
 
-func colorYellow(value string) string {
+func ColorYellow(value string) string {
 	return fmt.Sprintf("\033[0;33m%s\033[0m", value)
 }
 
-func colorBlue(value string) string {
+func ColorBlue(value string) string {
 	return fmt.Sprintf("\033[0;34m%s\033[0m", value)
 }

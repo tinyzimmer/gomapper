@@ -15,38 +15,30 @@
     along with gomapper.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-package main
+package scanner
 
 import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/tinyzimmer/gomapper/formats"
+	"github.com/tinyzimmer/gomapper/logging"
 )
 
-type ReqInput struct {
-	CustomExec string   `json:"customExec"`
-	Target     string   `json:"target"`
-	Method     string   `json:"method"`
-	Ports      string   `json:"ports"`
-	Detection  string   `json:"detection"`
-	Script     string   `json:"script"`
-	ScriptArgs string   `json:"scriptArgs"`
-	RawArgs    []string `json:"rawArgs"`
-}
-
-func RequestScanner(input *ReqInput) (Scanner, error) {
+func RequestScanner(input *formats.ReqInput) (Scanner, error) {
 	scanner := Scanner{}
 	scanner.Failed = false
 	scanner.ReqInput = input
 	xml, err := getOutXml()
 	if err != nil {
-		logError(err.Error())
+		logging.LogError(err.Error())
 		return scanner, err
 	}
 	scanner.Xml = xml
 	target, err := checkTarget(input.Target)
 	if err != nil {
-		logError(err.Error())
+		logging.LogError(err.Error())
 		return scanner, err
 	} else {
 		scanner.SetTarget(target)
@@ -103,8 +95,8 @@ func checkDetectionMethod(method string) (string, error) {
 	return "", nil
 }
 
-func GetHelperArgs(input *ReqInput, xml string) ([]string, error) {
-	logInfo("Determining scan arguments")
+func GetHelperArgs(input *formats.ReqInput, xml string) ([]string, error) {
+	logging.LogInfo("Determining scan arguments")
 	var computedArgs []string
 	method, err := checkScanMethod(input.Method)
 	if err == nil {
@@ -131,6 +123,6 @@ func GetHelperArgs(input *ReqInput, xml string) ([]string, error) {
 	computedArgs = append(computedArgs, "-oX")
 	computedArgs = append(computedArgs, xml)
 	computedArgs = append(computedArgs, input.Target)
-	logInfo(strings.Join(computedArgs, " "))
+	logging.LogInfo(strings.Join(computedArgs, " "))
 	return computedArgs, nil
 }

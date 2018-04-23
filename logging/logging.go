@@ -15,29 +15,31 @@
     along with gomapper.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-package main
+package logging
 
 import (
 	"fmt"
 	"log"
+
+	"github.com/tinyzimmer/gomapper/formats"
 )
 
-func logError(msg string) {
-	line := fmt.Sprintf("%s %s", colorRed("ERROR"), msg)
+func LogError(msg string) {
+	line := fmt.Sprintf("%s %s", formats.ColorRed("ERROR"), msg)
 	log.Println(line)
 }
 
-func logInfo(msg string) {
-	line := fmt.Sprintf("%s %s", colorGreen("INFO"), msg)
+func LogInfo(msg string) {
+	line := fmt.Sprintf("%s %s", formats.ColorGreen("INFO"), msg)
 	log.Println(line)
 }
 
-func logWarn(msg string) {
-	line := fmt.Sprintf("%s %s", colorYellow("WARNING"), msg)
+func LogWarn(msg string) {
+	line := fmt.Sprintf("%s %s", formats.ColorYellow("WARNING"), msg)
 	log.Println(line)
 }
 
-func logDebug(msg string) {
-	line := fmt.Sprintf("%s %s", colorBlue("DEBUG"), msg)
+func LogDebug(msg string) {
+	line := fmt.Sprintf("%s %s", formats.ColorBlue("DEBUG"), msg)
 	log.Println(line)
 }

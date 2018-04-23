@@ -1,32 +1,33 @@
 /**
     This file is part of gomapper.
-
     Gomapper is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
-
     Gomapper is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
-
     You should have received a copy of the GNU General Public License
     along with gomapper.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-package main
+package gomapperdb
 
 import (
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/tinyzimmer/gomapper/formats"
+	"github.com/tinyzimmer/gomapper/logging"
+	"github.com/tinyzimmer/gomapper/scanner"
 )
 
 func logRequest(req *http.Request) {
 	msg := fmt.Sprintf("%s : %s %s : %s", req.RemoteAddr, req.Method, req.Proto, req.RequestURI)
-	logInfo(fmt.Sprintf("Received Request: %s", msg))
+	logging.LogInfo(fmt.Sprintf("Received Request: %s", msg))
 }
 
 func formatResponse(data interface{}) (string, error) {
@@ -37,38 +38,38 @@ func formatResponse(data interface{}) (string, error) {
 	return string(dumped) + "\n", nil
 }
 
-func (db MemoryDatabase) receivedScan(w http.ResponseWriter, req *http.Request) {
+func (db MemoryDatabase) ReceivedScan(w http.ResponseWriter, req *http.Request) {
 	logRequest(req)
 	decoder := json.NewDecoder(req.Body)
-	input := &ReqInput{}
+	input := &formats.ReqInput{}
 	err := decoder.Decode(&input)
 	if err != nil {
-		logError("Invalid JSON in request payload")
-		logError(fmt.Sprintf("\t:%s", input))
+		logging.LogError("Invalid JSON in request payload")
+		logging.LogError(fmt.Sprintf("\t:%s", input))
 		io.WriteString(w, "{\"error\": \"invalid request json\"}\n")
 		return
 	} else {
-		logInfo(fmt.Sprintf("Parsed Request: %s", input))
+		logging.LogInfo(fmt.Sprintf("Parsed Request: %s", input))
 	}
 	defer req.Body.Close()
-	scanner, err := RequestScanner(input)
+	scanner, err := scanner.RequestScanner(input)
 	if err != nil {
 		errString := err.Error()
-		logError(errString)
+		logging.LogError(errString)
 		io.WriteString(w, fmt.Sprintf("{\"error\": \"%s\"}\n", err))
 		return
 	} else {
-		logInfo("Initiating nmap scan")
+		logging.LogInfo("Initiating nmap scan")
 	}
 	scanner.RunScan()
 	if scanner.Failed {
-		logWarn("User requested scan failed")
+		logging.LogWarn("User requested scan failed")
 		response, _ := formatResponse(scanner.Error)
 		io.WriteString(w, response)
 	} else {
-		logInfo("Adding scan results to graph")
+		logging.LogInfo("Adding scan results to graph")
 		db.AddScanResultsByNetwork(scanner.Target, scanner.Results)
-		logInfo("Returning scan results")
+		logging.LogInfo("Returning scan results")
 		response, _ := formatResponse(scanner.Results)
 		io.WriteString(w, response)
 	}

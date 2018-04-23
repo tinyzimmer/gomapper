@@ -15,7 +15,7 @@
     along with gomapper.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-package main
+package scanner
 
 import (
 	"bytes"
@@ -25,17 +25,21 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+
+	"github.com/tinyzimmer/gomapper/formats"
+	"github.com/tinyzimmer/gomapper/logging"
+	"github.com/tinyzimmer/gomapper/nmapresult"
 )
 
 type Scanner struct {
 	Executable   string
-	ReqInput     *ReqInput
+	ReqInput     *formats.ReqInput
 	Target       string
 	RawArgs      []string
 	ComputedArgs []string
 	RawEnforce   bool
 	Xml          string
-	Results      *NmapRun
+	Results      *nmapresult.NmapRun
 	Error        ErrorResponse
 	Failed       bool
 	Debug        bool
@@ -63,7 +67,7 @@ func InitScanner(target string, debug bool) (Scanner, error) {
 
 func (s *Scanner) SetDebug(debug bool) {
 	if debug {
-		logDebug("Initializing scanner with debug")
+		logging.LogDebug("Initializing scanner with debug")
 	}
 	s.Debug = debug
 }
@@ -118,7 +122,7 @@ func (s *Scanner) RunHelperScan() {
 	} else {
 		cmd := exec.Command(s.Executable, args...)
 		if s.Debug {
-			logDebug(fmt.Sprint(cmd))
+			logging.LogDebug(fmt.Sprint(cmd))
 		}
 		cmd.Stdout = stdout
 		cmd.Stderr = stderr
@@ -134,7 +138,7 @@ func (s *Scanner) RunRawArgScan() {
 	rawArgs = append(rawArgs, s.Target)
 	cmd := exec.Command(s.Executable, rawArgs...)
 	if s.Debug {
-		logDebug(fmt.Sprint(cmd))
+		logging.LogDebug(fmt.Sprint(cmd))
 	}
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
@@ -149,15 +153,15 @@ func (s *Scanner) HandleReturn(err error, stdout string, stderr string) {
 	} else {
 		results := ParseRun(s.Xml)
 		s.Results = results
-		logInfo(fmt.Sprintf("Scan completed in %s seconds", floatToString(results.RunStats.Finished.Elapsed)))
+		logging.LogInfo(fmt.Sprintf("Scan completed in %s seconds", formats.FloatToString(results.RunStats.Finished.Elapsed)))
 	}
 }
 
 func (s *Scanner) ReturnFail(err error, msg string) {
 	if msg != "" {
-		logError(fmt.Sprint(err) + ": " + msg)
+		logging.LogError(fmt.Sprint(err) + ": " + msg)
 	} else {
-		logError(fmt.Sprint(err))
+		logging.LogError(fmt.Sprint(err))
 	}
 	response := ErrorResponse{}
 	response.Error = fmt.Sprint(err)
@@ -166,9 +170,9 @@ func (s *Scanner) ReturnFail(err error, msg string) {
 	s.Error = response
 }
 
-func ParseRun(filePath string) *NmapRun {
+func ParseRun(filePath string) *nmapresult.NmapRun {
 	file, _ := ioutil.ReadFile(filePath)
-	res := &NmapRun{}
+	res := &nmapresult.NmapRun{}
 	xml.Unmarshal([]byte(string(file)), &res)
 	os.Remove(filePath)
 	return res
@@ -183,7 +187,7 @@ func createPipes() (*bytes.Buffer, *bytes.Buffer) {
 func getOutXml() (string, error) {
 	file, err := ioutil.TempFile("", "")
 	if err != nil {
-		logError(err.Error())
+		logging.LogError(err.Error())
 		return "", err
 	}
 	return file.Name(), nil
