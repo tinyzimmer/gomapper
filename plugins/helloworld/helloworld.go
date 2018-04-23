@@ -19,18 +19,14 @@ package main
 
 import (
 	"fmt"
-
 	"github.com/tinyzimmer/gomapper/nmapresult"
 )
-
-var NmapRunInterface nmapresult.NmapRun
 
 func init() {
 	fmt.Println("I was loaded")
 }
 
-func OnScanComplete() {
+func OnScanComplete(*nmapresult.NmapRun) error {
 	fmt.Println("I saw that")
+	return nil
 }
-
-func main() {}

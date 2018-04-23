@@ -26,13 +26,17 @@ import (
 )
 
 type LoadedPlugins struct {
-	Plugins []*GomapperPlugin
+	Plugins []GomapperPlugin
 }
 
 type GomapperPlugin struct {
-	Name         string
-	Interface    *plugin.Plugin
-	RunInterface interface{}
+	Name            string
+	SymbolInterface *plugin.Plugin
+	PluginInterface PluginInterface
+}
+
+type PluginInterface interface {
+	OnScanComplete()
 }
 
 func LoadPlugins(plugins []string) (loadedPlugins LoadedPlugins) {
@@ -43,10 +47,9 @@ func LoadPlugins(plugins []string) (loadedPlugins LoadedPlugins) {
 			if err != nil {
 				logging.LogError(err.Error())
 			} else {
-				loadedPlugin := &GomapperPlugin{}
+				loadedPlugin := GomapperPlugin{}
 				loadedPlugin.Name = mod
-				loadedPlugin.Interface = p
-				loadedPlugin.checkInterfaces()
+				loadedPlugin.SymbolInterface = p
 				loadedPlugins.Plugins = append(loadedPlugins.Plugins, loadedPlugin)
 				logging.LogInfo(fmt.Sprintf("Loaded plugin: %s", mod))
 			}
@@ -55,26 +58,21 @@ func LoadPlugins(plugins []string) (loadedPlugins LoadedPlugins) {
 	return
 }
 
-func (g GomapperPlugin) checkInterfaces() {
-	r, err := g.Interface.Lookup("NmapRunInterface")
+func (g GomapperPlugin) OnScanComplete(nmapRun *nmapresult.NmapRun) {
+	run, err := g.SymbolInterface.Lookup("OnScanComplete")
 	if err != nil {
 		logging.LogWarn(g.formatError(err))
-	} else {
-		g.RunInterface = *r.(*nmapresult.NmapRun)
-	}
-	return
-}
-
-func (g GomapperPlugin) OnScanComplete(nmapRun *nmapresult.NmapRun) {
-	f, err := g.Interface.Lookup("OnScanComplete")
-	if err != nil {
-		logging.LogError(g.formatError(err))
 		return
 	}
-	if g.RunInterface != nil {
-		g.RunInterface = *nmapRun
+	runFunc, ok := run.(func(*nmapresult.NmapRun) error)
+	if !ok {
+		logging.LogError("bad implementation")
+		return
 	}
-	f.(func())()
+	if err := runFunc(nmapRun); err != nil {
+		logging.LogError(g.formatError(err))
+	}
+	return
 }
 
 func (g GomapperPlugin) formatError(err error) string {
