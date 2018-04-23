@@ -29,6 +29,7 @@ import (
 type Configuration struct {
 	Server    ServerConfig
 	Discovery DiscoveryConfig
+	Plugins   PluginConfig
 }
 
 type ServerConfig struct {
@@ -41,6 +42,10 @@ type DiscoveryConfig struct {
 	Mode     string
 	Networks []string
 	Debug    bool
+}
+
+type PluginConfig struct {
+	EnabledPlugins []string `toml:"enabled_plugins"`
 }
 
 func GetConfig(configFile *string) (config Configuration, err error) {
@@ -69,6 +74,7 @@ func parseEnvironmentConfiguration() (config Configuration) {
 	config.Discovery.Mode = os.Getenv("GOMAPPER_DISCOVERY_MODE")
 	config.Discovery.Debug = checkEnvBool(os.Getenv("GOMAPPER_DISCOVERY_DEBUG"), false)
 	config.Discovery.Networks = checkEnvNetworks(os.Getenv("GOMAPPER_DISCOVERY_NETWORKS"))
+	config.Plugins.EnabledPlugins = strings.Split(os.Getenv("GOMAPPER_ENABLED_PLUGINS"), ",")
 	if undefined(config.Server.ListenAddress) {
 		config.Server.ListenAddress = getDefault("listenAddress")
 	}

@@ -72,6 +72,9 @@ func (db MemoryDatabase) ReceivedScan(w http.ResponseWriter, req *http.Request) 
 		logging.LogInfo("Returning scan results")
 		response, _ := formatResponse(scanner.Results)
 		io.WriteString(w, response)
+		for _, plugin := range db.Plugins.Plugins {
+			plugin.OnScanComplete(scanner.Results)
+		}
 	}
 }
 

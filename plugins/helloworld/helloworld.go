@@ -15,16 +15,22 @@
     along with gomapper.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-package helloworld
+package main
 
 import (
-  "fmt"
-  "github.com/tinyzimmer/gomapper"
+	"fmt"
+
+	"github.com/tinyzimmer/gomapper/nmapresult"
 )
 
+var NmapRunInterface nmapresult.NmapRun
+
 func init() {
-  fmt.Println("I was loaded")
+	fmt.Println("I was loaded")
 }
 
-func OnScanComplete(result *NmapResult) {
-  fmt.Println("I saw that")
+func OnScanComplete() {
+	fmt.Println("I saw that")
+}
+
+func main() {}

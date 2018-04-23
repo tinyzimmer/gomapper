@@ -24,6 +24,7 @@ import (
 	"github.com/tinyzimmer/gomapper/logging"
 	"github.com/tinyzimmer/gomapper/netutils"
 	"github.com/tinyzimmer/gomapper/nmapresult"
+	"github.com/tinyzimmer/gomapper/plugininterface"
 )
 
 type Network struct {
@@ -44,9 +45,10 @@ type DbService struct {
 
 type MemoryDatabase struct {
 	Session *memdb.MemDB
+	Plugins plugininterface.LoadedPlugins
 }
 
-func GetMemoryDatabase() (MemoryDatabase, error) {
+func GetMemoryDatabase(plugins plugininterface.LoadedPlugins) (MemoryDatabase, error) {
 	database := MemoryDatabase{}
 	schema := &memdb.DBSchema{
 		Tables: map[string]*memdb.TableSchema{
@@ -67,6 +69,7 @@ func GetMemoryDatabase() (MemoryDatabase, error) {
 		return database, err
 	}
 	database.Session = db
+	database.Plugins = plugins
 	return database, nil
 }
 

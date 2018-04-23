@@ -12,7 +12,7 @@ mkdir -p build/{bin,tmp}
 mkdir -p build/usr/local/share/nmap
 
 echo "Starting static nmap build"
-cd nmap-build
+cd build/nmap-build
 docker build -t nmap-build --build-arg UID=$(id -u) .
 docker run --rm \
     -e UID=$(id -u) \

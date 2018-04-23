@@ -27,6 +27,7 @@ import (
 	"github.com/tinyzimmer/gomapper/gomapperdb"
 	"github.com/tinyzimmer/gomapper/logging"
 	"github.com/tinyzimmer/gomapper/netutils"
+	"github.com/tinyzimmer/gomapper/plugininterface"
 )
 
 func startHttpListener(addr net.IP, port string, db gomapperdb.MemoryDatabase) {
@@ -51,9 +52,10 @@ func main() {
 	}
 	addr := netutils.GetIpObj(config.Server.ListenAddress)
 	port := config.Server.ListenPort
-	localAddr, db, err := gomapperdb.SetupNetworkDiscovery()
+	plugins := plugininterface.LoadPlugins(config.Plugins.EnabledPlugins)
+	localAddr, db, err := gomapperdb.SetupNetworkDiscovery(plugins)
 	if err == nil && config.Discovery.Enabled {
-		go gomapperdb.LocalNetworkDiscovery(localAddr, db, config)
+		go gomapperdb.LocalNetworkDiscovery(localAddr, db, plugins, config)
 	}
 	startHttpListener(addr, port, db)
 }

@@ -27,6 +27,7 @@ import (
 	"github.com/tinyzimmer/gomapper/config"
 	"github.com/tinyzimmer/gomapper/logging"
 	"github.com/tinyzimmer/gomapper/netutils"
+	"github.com/tinyzimmer/gomapper/plugininterface"
 	"github.com/tinyzimmer/gomapper/scanner"
 )
 
@@ -126,7 +127,7 @@ func probeNetwork(db MemoryDatabase, network string, config config.Configuration
 	}
 }
 
-func LocalNetworkDiscovery(addr net.IP, db MemoryDatabase, config config.Configuration) {
+func LocalNetworkDiscovery(addr net.IP, db MemoryDatabase, plugins plugininterface.LoadedPlugins, config config.Configuration) {
 	for _, netw := range config.Discovery.Networks {
 		logging.LogInfo(fmt.Sprintf("Adding %s to memory database", netw))
 		db.AddNetwork(netw)
@@ -149,14 +150,14 @@ func notifyDiscoveryDisabled() {
 	logging.LogWarn("Network discovery is disabled")
 }
 
-func SetupNetworkDiscovery() (addr net.IP, db MemoryDatabase, err error) {
+func SetupNetworkDiscovery(plugins plugininterface.LoadedPlugins) (addr net.IP, db MemoryDatabase, err error) {
 	addr, err = netutils.GetAddr()
 	if err != nil {
 		logging.LogError(err.Error())
 		notifyDiscoveryDisabled()
 		return
 	}
-	db, err = GetMemoryDatabase()
+	db, err = GetMemoryDatabase(plugins)
 	if err != nil {
 		logging.LogError(err.Error())
 		notifyDiscoveryDisabled()
