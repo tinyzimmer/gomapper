@@ -27,9 +27,11 @@ import (
 )
 
 type Configuration struct {
-	Server    ServerConfig
-	Discovery DiscoveryConfig
-	Plugins   PluginConfig
+	Server         ServerConfig
+	Discovery      DiscoveryConfig
+	EnabledPlugins []string `toml:"enabled_plugins"`
+	Plugins        map[string]map[string]interface{}
+	Debug          bool
 }
 
 type ServerConfig struct {
@@ -39,13 +41,7 @@ type ServerConfig struct {
 
 type DiscoveryConfig struct {
 	Enabled  bool
-	Mode     string
 	Networks []string
-	Debug    bool
-}
-
-type PluginConfig struct {
-	EnabledPlugins []string `toml:"enabled_plugins"`
 }
 
 func GetConfig(configFile *string) (config Configuration, err error) {
@@ -68,26 +64,25 @@ func decodeConfigurationFile(configFile string) (config Configuration, err error
 }
 
 func parseEnvironmentConfiguration() (config Configuration) {
+	config.Debug = checkEnvBool(os.Getenv("GOMAPPER_DEBUG"), false)
 	config.Server.ListenAddress = os.Getenv("GOMAPPER_LISTEN_ADDRESS")
 	config.Server.ListenPort = os.Getenv("GOMAPPER_LISTEN_PORT")
 	config.Discovery.Enabled = checkEnvBool(os.Getenv("GOMAPPER_DISCOVERY_ENABLED"), true)
-	config.Discovery.Mode = os.Getenv("GOMAPPER_DISCOVERY_MODE")
-	config.Discovery.Debug = checkEnvBool(os.Getenv("GOMAPPER_DISCOVERY_DEBUG"), false)
-	config.Discovery.Networks = checkEnvNetworks(os.Getenv("GOMAPPER_DISCOVERY_NETWORKS"))
-	config.Plugins.EnabledPlugins = strings.Split(os.Getenv("GOMAPPER_ENABLED_PLUGINS"), ",")
+	config.Discovery.Networks = checkEnvSlice(os.Getenv("GOMAPPER_DISCOVERY_NETWORKS"))
+	config.EnabledPlugins = checkEnvSlice(os.Getenv("GOMAPPER_ENABLED_PLUGINS"))
 	if undefined(config.Server.ListenAddress) {
 		config.Server.ListenAddress = getDefault("listenAddress")
 	}
 	if undefined(config.Server.ListenPort) {
 		config.Server.ListenPort = getDefault("listenPort")
 	}
-	if undefined(config.Discovery.Mode) {
-		config.Discovery.Mode = getDefault("discoveryMode")
+	if len(config.EnabledPlugins) == 0 {
+		config.EnabledPlugins = []string{"nmap"}
 	}
 	return
 }
 
-func checkEnvNetworks(value string) (networks []string) {
+func checkEnvSlice(value string) (networks []string) {
 	if value == "" {
 		return
 	}
@@ -129,9 +124,6 @@ func getDefault(config string) (value string) {
 	}
 	if config == "listenPort" {
 		value = "8080"
-	}
-	if config == "discoveryMode" {
-		value = "ping"
 	}
 	return
 }

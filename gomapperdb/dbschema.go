@@ -18,42 +18,29 @@
 package gomapperdb
 
 import (
-	"fmt"
+	"net"
 
 	"github.com/hashicorp/go-memdb"
+	"github.com/tinyzimmer/gomapper/formats"
 	"github.com/tinyzimmer/gomapper/logging"
 	"github.com/tinyzimmer/gomapper/netutils"
-	"github.com/tinyzimmer/gomapper/nmapresult"
 	"github.com/tinyzimmer/gomapper/plugininterface"
 )
 
-type Network struct {
-	Subnet string
-	Hosts  []*DbHost
-}
-
-type DbHost struct {
-	IP       string
-	MAC      string
-	Services []*DbService
-}
-
-type DbService struct {
-	Port string
-	Name string
-}
+type dbnetwork formats.DbNetwork
 
 type MemoryDatabase struct {
-	Session *memdb.MemDB
-	Plugins plugininterface.LoadedPlugins
+	LocalAddr net.IP
+	Session   *memdb.MemDB
+	Plugins   plugininterface.LoadedPlugins
 }
 
-func GetMemoryDatabase(plugins plugininterface.LoadedPlugins) (MemoryDatabase, error) {
+func GetMemoryDatabase(plugins plugininterface.LoadedPlugins, addr net.IP) (MemoryDatabase, error) {
 	database := MemoryDatabase{}
 	schema := &memdb.DBSchema{
 		Tables: map[string]*memdb.TableSchema{
-			"network": &memdb.TableSchema{
-				Name: "network",
+			"dbnetwork": &memdb.TableSchema{
+				Name: "dbnetwork",
 				Indexes: map[string]*memdb.IndexSchema{
 					"id": &memdb.IndexSchema{
 						Name:    "id",
@@ -73,38 +60,10 @@ func GetMemoryDatabase(plugins plugininterface.LoadedPlugins) (MemoryDatabase, e
 	return database, nil
 }
 
-func (d MemoryDatabase) AddScanResultsByNetwork(network string, results *nmapresult.NmapRun) {
-	txn := d.Session.Txn(true)
-	defer txn.Abort()
-	net, err := d.GetNetwork(network)
-	if net == nil || err != nil {
-		net = &Network{}
-		net.Subnet = network
-	}
-	for _, host := range results.Hosts {
-		ip, mac := getScanAddrs(host.Addresses)
-		dbHost := &DbHost{}
-		dbHost.IP = ip
-		dbHost.MAC = mac
-		for _, port := range host.Ports.Ports {
-			service := &DbService{}
-			service.Port = fmt.Sprintf("%s/%s", port.PortId, port.Protocol)
-			service.Name = port.Service.Name
-			dbHost.Services = append(dbHost.Services, service)
-		}
-		net.Hosts = append(net.Hosts, dbHost)
-	}
-	if err := txn.Insert("network", net); err != nil {
-		logging.LogError(err.Error())
-	} else {
-		txn.Commit()
-	}
-}
-
-func (d MemoryDatabase) GetNetwork(network string) (result *Network, err error) {
+func (d MemoryDatabase) GetNetwork(network string) (result *formats.DbNetwork, err error) {
 	txn := d.Session.Txn(false)
 	defer txn.Abort()
-	raw, err := txn.First("network", "id", network)
+	raw, err := txn.First("dbnetwork", "id", network)
 	if err != nil {
 		logging.LogError(err.Error())
 		return
@@ -112,33 +71,31 @@ func (d MemoryDatabase) GetNetwork(network string) (result *Network, err error) 
 	if raw == nil {
 		return
 	}
-	result = raw.(*Network)
+	result = raw.(*formats.DbNetwork)
 	return
 }
 
-func (d MemoryDatabase) GetAllNetworks() (networks []*Network) {
+func (d MemoryDatabase) GetAllNetworks() (networks []formats.DbNetwork) {
 	txn := d.Session.Txn(false)
 	defer txn.Abort()
-	iter, err := txn.Get("network", "id")
+	iter, err := txn.Get("dbnetwork", "id")
 	checkError(err)
 	for {
 		raw := iter.Next()
 		if raw == nil {
 			break
 		} else {
-			network := raw.(*Network)
+			network := raw.(formats.DbNetwork)
 			networks = append(networks, network)
 		}
 	}
 	return
 }
 
-func (d MemoryDatabase) AddNetwork(network string) {
+func (d MemoryDatabase) AddNetwork(network formats.DbNetwork) {
 	txn := d.Session.Txn(true)
 	defer txn.Abort()
-	n := &Network{}
-	n.Subnet = network
-	if err := txn.Insert("network", n); err != nil {
+	if err := txn.Insert("dbnetwork", network); err != nil {
 		logging.LogError(err.Error())
 	} else {
 		txn.Commit()
@@ -156,17 +113,6 @@ func checkDbNetwork(network string, ip string) (subnet string) {
 		subnet = network
 	} else {
 		subnet = netutils.FormatDefaultNetmask(ip)
-	}
-	return
-}
-
-func getScanAddrs(addrs []nmapresult.Address) (ip string, mac string) {
-	for _, addr := range addrs {
-		if addr.AddrType == "ipv4" {
-			ip = addr.Addr
-		} else if addr.AddrType == "mac" {
-			mac = addr.Addr
-		}
 	}
 	return
 }

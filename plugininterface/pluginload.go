@@ -18,12 +18,15 @@
 package plugininterface
 
 import (
-	"errors"
 	"fmt"
-	"plugin"
+	"net"
 
+	"github.com/tinyzimmer/gomapper/config"
+	"github.com/tinyzimmer/gomapper/formats"
+	"github.com/tinyzimmer/gomapper/gomapperplugins"
 	"github.com/tinyzimmer/gomapper/logging"
-	"github.com/tinyzimmer/gomapper/nmapresult"
+
+	"github.com/tinyzimmer/gomapper/gomapperplugins/nmap"
 )
 
 type LoadedPlugins struct {
@@ -31,47 +34,93 @@ type LoadedPlugins struct {
 }
 
 type GomapperPlugin struct {
-	Name            string
-	SymbolInterface *plugin.Plugin
+	Name      string
+	Methods   []string
+	Interface *gomapperplugins.PluginInterface
+	Config    map[string]interface{}
 }
 
-func LoadPlugins(plugins []string) (loadedPlugins LoadedPlugins) {
-	for _, mod := range plugins {
+func LoadPlugins(conf config.Configuration) (loadedPlugins LoadedPlugins) {
+	for _, mod := range conf.EnabledPlugins {
 		if mod != "" {
-			pluginFile := fmt.Sprintf("plugins/%s/%s.so", mod, mod)
-			p, err := plugin.Open(pluginFile)
+			loadedPlugin := GomapperPlugin{}
+			loadedPlugin.Name = mod
+			methods, _, err := loadPluginInterface(mod)
 			if err != nil {
-				logging.LogError(err.Error())
+				logging.LogError(fmt.Sprintf("engines: Failed to load plugin: %s", mod))
 			} else {
-				loadedPlugin := GomapperPlugin{}
-				loadedPlugin.Name = mod
-				loadedPlugin.SymbolInterface = p
+				c, _ := conf.Plugins[mod]
+				if c != nil {
+					c["debug"] = conf.Debug
+				} else {
+					c = make(map[string]interface{})
+					c["debug"] = conf.Debug
+				}
+				loadedPlugin.Config = c
+				loadedPlugin.Methods = methods
 				loadedPlugins.Plugins = append(loadedPlugins.Plugins, loadedPlugin)
-				logging.LogInfo(fmt.Sprintf("Loaded plugin: %s", mod))
+				logging.LogInfo(fmt.Sprintf("engines: Loaded plugin: %s", mod))
+				logging.LogInfo(fmt.Sprintf("engines: %s methods: %s", mod, loadedPlugin.Methods))
 			}
 		}
 	}
 	return
 }
 
-func (g GomapperPlugin) OnScanComplete(nmapRun *nmapresult.NmapRun, db interface{}) {
-	run, err := g.SymbolInterface.Lookup("OnScanComplete")
-	if err != nil {
-		logging.LogWarn(g.formatError(err))
-		return
-	}
-	runFunc, ok := run.(func(*nmapresult.NmapRun, interface{}) error)
-	if !ok {
-		err := errors.New("Bad OnScanComplete implementation")
-		logging.LogError(g.formatError(err))
-		return
-	}
-	if err := runFunc(nmapRun, db); err != nil {
-		logging.LogError(g.formatError(err))
+func loadPluginInterface(mod string) (methods []string, interf gomapperplugins.PluginInterface, err error) {
+	if mod == "nmap" {
+		methods, interf, err = nmap.LoadPlugin()
 	}
 	return
 }
 
-func (g GomapperPlugin) formatError(err error) string {
-	return fmt.Sprintf("%s: %s", g.Name, err.Error())
+func (g GomapperPlugin) CheckInterface() ([]string, bool) {
+	methods, _, err := g.GetInterface()
+	if err != nil {
+		return nil, false
+	} else {
+		return methods, true
+	}
+}
+
+func (g GomapperPlugin) GetInterface() (methods []string, inter gomapperplugins.PluginInterface, err error) {
+	methods, inter, err = loadPluginInterface(g.Name)
+	if err != nil {
+		g.logError(err)
+		return
+	}
+	return
+}
+
+func (g GomapperPlugin) DiscoverNetworks() ([]net.IPNet, error) {
+	_, inter, _ := g.GetInterface()
+	networks, err := inter.DiscoverNetworks(g.Config)
+	if err != nil {
+		return nil, err
+	}
+	return networks, nil
+}
+
+func (g GomapperPlugin) ScanNetwork(network string) (formats.DbNetwork, error) {
+	_, inter, _ := g.GetInterface()
+	dbNetwork, err := inter.ScanNetwork(g.Config, network)
+	return dbNetwork, err
+}
+
+func (g GomapperPlugin) HandleScanRequest(req *formats.ReqInput) (interface{}, formats.DbNetwork) {
+	_, inter, _ := g.GetInterface()
+	response, dbNetwork := inter.HandleScanRequest(g.Config, req)
+	return response, dbNetwork
+}
+
+func (g GomapperPlugin) logInfo(msg string) {
+	logging.LogInfo(fmt.Sprintf("%s: %s", g.Name, msg))
+}
+
+func (g GomapperPlugin) logWarn(msg string) {
+	logging.LogWarn(fmt.Sprintf("%s: %s", g.Name, msg))
+}
+
+func (g GomapperPlugin) logError(err error) {
+	logging.LogError(fmt.Sprintf("%s: %s", g.Name, err.Error()))
 }

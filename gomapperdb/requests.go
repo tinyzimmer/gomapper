@@ -20,9 +20,9 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/tinyzimmer/gomapper/config"
 	"github.com/tinyzimmer/gomapper/formats"
 	"github.com/tinyzimmer/gomapper/logging"
-	"github.com/tinyzimmer/gomapper/scanner"
 )
 
 func logRequest(req *http.Request) {
@@ -38,42 +38,55 @@ func formatResponse(data interface{}) (string, error) {
 	return string(dumped) + "\n", nil
 }
 
+func (db MemoryDatabase) RunPlugins(config config.Configuration) {
+	for _, plugin := range db.Plugins.Plugins {
+		for _, netw := range config.Discovery.Networks {
+			dbNetwork, err := plugin.ScanNetwork(netw)
+			if err != nil {
+				logging.LogError(err.Error())
+			} else {
+				db.AddNetwork(dbNetwork)
+			}
+		}
+		discoveredNetworks, err := plugin.DiscoverNetworks()
+		if err != nil {
+			logging.LogError(err.Error())
+		} else {
+			for _, netw := range discoveredNetworks {
+				netString := netw.String()
+				dbNetwork, err := plugin.ScanNetwork(netString)
+				if err != nil {
+					logging.LogError(err.Error())
+				} else {
+					db.AddNetwork(dbNetwork)
+				}
+			}
+		}
+	}
+}
+
 func (db MemoryDatabase) ReceivedScan(w http.ResponseWriter, req *http.Request) {
 	logRequest(req)
 	decoder := json.NewDecoder(req.Body)
 	input := &formats.ReqInput{}
 	err := decoder.Decode(&input)
 	if err != nil {
-		logging.LogError("Invalid JSON in request payload")
-		logging.LogError(fmt.Sprintf("\t:%s", input))
-		io.WriteString(w, "{\"error\": \"invalid request json\"}\n")
+		logging.LogError("Invalid Json in request payload")
+		response, _ := formatResponse(err)
+		io.WriteString(w, response)
 		return
 	} else {
 		logging.LogInfo(fmt.Sprintf("Parsed Request: %s", input))
 	}
 	defer req.Body.Close()
-	scanner, err := scanner.RequestScanner(input)
-	if err != nil {
-		errString := err.Error()
-		logging.LogError(errString)
-		io.WriteString(w, fmt.Sprintf("{\"error\": \"%s\"}\n", err))
-		return
-	} else {
-		logging.LogInfo("Initiating nmap scan")
-	}
-	scanner.RunScan()
-	if scanner.Failed {
-		logging.LogWarn("User requested scan failed")
-		response, _ := formatResponse(scanner.Error)
-		io.WriteString(w, response)
-	} else {
-		logging.LogInfo("Adding scan results to graph")
-		db.AddScanResultsByNetwork(scanner.Target, scanner.Results)
-		logging.LogInfo("Returning scan results")
-		response, _ := formatResponse(scanner.Results)
-		io.WriteString(w, response)
-		for _, plugin := range db.Plugins.Plugins {
-			plugin.OnScanComplete(scanner.Results, db)
+	for _, plugin := range db.Plugins.Plugins {
+		for _, method := range plugin.Methods {
+			if method == input.Method {
+				res, dbNetwork := plugin.HandleScanRequest(input)
+				db.AddNetwork(dbNetwork)
+				response, _ := formatResponse(res)
+				io.WriteString(w, response)
+			}
 		}
 	}
 }

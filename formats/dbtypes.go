@@ -17,9 +17,18 @@
 
 package formats
 
-type ReqInput struct {
-	CustomExec string            `json:"customExec"`
-	Target     string            `json:"target"`
-	Method     string            `json:"method"`
-	Options    map[string]string `json:"options"`
+type DbNetwork struct {
+	Subnet string
+	Hosts  []DbHost
+}
+
+type DbHost struct {
+	IP       string
+	MAC      string
+	Services []DbService
+}
+
+type DbService struct {
+	Port string
+	Name string
 }

@@ -15,25 +15,16 @@
     along with gomapper.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-package main
+package gomapperplugins
 
 import (
-	"fmt"
-	"github.com/tinyzimmer/gomapper/gomapperdb"
-	"github.com/tinyzimmer/gomapper/nmapresult"
+	"net"
+
+	"github.com/tinyzimmer/gomapper/formats"
 )
 
-type DatabaseConnector interface{}
-
-func init() {
-	fmt.Println("I was loaded")
-}
-
-func OnScanComplete(nmapRun *nmapresult.NmapRun, db interface{}) error {
-	fmt.Println("I saw that")
-	_, ok := db.(gomapperdb.MemoryDatabase)
-	if !ok {
-		fmt.Println("Invalid database")
-	}
-	return nil
+type PluginInterface interface {
+	DiscoverNetworks(map[string]interface{}) ([]net.IPNet, error)
+	ScanNetwork(map[string]interface{}, string) (formats.DbNetwork, error)
+	HandleScanRequest(map[string]interface{}, *formats.ReqInput) (interface{}, formats.DbNetwork)
 }

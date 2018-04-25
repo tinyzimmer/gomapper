@@ -15,7 +15,7 @@
     along with gomapper.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-package nmapresult
+package nmap
 
 type NmapRun struct {
 	Scanner   string    `xml:"scanner,attr"`

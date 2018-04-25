@@ -34,15 +34,12 @@ func startHttpListener(addr net.IP, port string, db gomapperdb.MemoryDatabase) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/scan", db.ReceivedScan)
 	mux.HandleFunc("/query", db.IterateNetworks)
-	if netutils.IsPrivateAddr(addr) {
-		logging.LogInfo(fmt.Sprintf("Listening on private address: %s:%s", addr, port))
-	} else {
-		logging.LogInfo(fmt.Sprintf("Listening on public address %s:%s", addr, port))
-	}
+	logging.LogInfo(fmt.Sprintf("main: Listening on address: %s:%s", addr, port))
 	http.ListenAndServe(fmt.Sprintf("%s:%s", addr, port), mux)
 }
 
 func main() {
+
 	var configFile = flag.String("config", "", "toml configuration file")
 	flag.Parse()
 	config, err := config.GetConfig(configFile)
@@ -50,12 +47,17 @@ func main() {
 		logging.LogError(err.Error())
 		return
 	}
+	plugins := plugininterface.LoadPlugins(config)
+	if len(plugins.Plugins) == 0 {
+		logging.LogError("main: No plugins loaded")
+		return
+	}
+	db, err := gomapperdb.SetupNetworkDiscovery(plugins)
+	if err == nil && config.Discovery.Enabled {
+		go db.RunPlugins(config)
+	}
+
 	addr := netutils.GetIpObj(config.Server.ListenAddress)
 	port := config.Server.ListenPort
-	plugins := plugininterface.LoadPlugins(config.Plugins.EnabledPlugins)
-	localAddr, db, err := gomapperdb.SetupNetworkDiscovery(plugins)
-	if err == nil && config.Discovery.Enabled {
-		go gomapperdb.LocalNetworkDiscovery(localAddr, db, plugins, config)
-	}
 	startHttpListener(addr, port, db)
 }

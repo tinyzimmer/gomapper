@@ -1,7 +1,10 @@
 # gomapper
-REST-like interface in go for running Nmap scans
 
-Actually, I am also turning it into a queryable, passive network mapper that stores it's data in a go-memdb
+Gomapper aims to be a pluggable passive network mapper for various applications. It will be able to utilize different engines to draw dynamic maps of networks (with potentially exposed vulnerabilties) and store them in memory. The maps are queryable via a REST-like API.
+
+The individual "engines" themselves can also support ad-hoc queries. For now there is an "nmap" engine which can be queried similar (needs updating) to the methods below and returns the detailed response in an easy to parse Json format.
+
+I plan to create engines that can interact with various cloud provider APIs to do more intelligent analysis and draw more detailed maps in those types of environments.
 
 # Building/Downloading
 
@@ -28,15 +31,12 @@ The container weighs in at about 30 MB and will have absolutely nothing but the 
 If I keep improving this I'll also try to keep an updated image on dockerhub
 
 ```bash
-$> docker pull tinyzimmer/gomapper
 $> docker run -p 8080:8080 tinyzimmer/gomapper
 ```
 
 You can also use the docker container as a standalone nmap installation
 
 ```bash
-$> docker run --rm tinyzimmer/gomapper /bin/nmap
-$> # or
 $> alias nmap='docker run --rm tinyzimmer/gomapper /bin/nmap'
 $> nmap
 ```
@@ -51,9 +51,11 @@ $> go get github.com/tinyzimmer/gomapper
 $> go install github.com/tinyzimmer/gomapper
 ```
 
-If you run this way without root, network discovery will be disabled
+If you run this way without root, automatic network discovery will be disabled
 
 # Running
+
+*these are out dated i'll make new ones*
 
 ![Server side](doc/server.apng)
 
@@ -79,14 +81,22 @@ The configurations that can be passed via the environment are below:
 |----------|:-------------:|------:|
 |GOMAPPER_LISTEN_ADDRESS|ip address|First non-local interface found|
 |GOMAPPER_LISTEN_PORT|port|8080|
-|GOMAPPER_DISCOVERY_ENABLED|0,1,false,true|true|
-|GOMAPPER_DISCOVERY_MODE|ping,stealth,connect|ping|
+|GOMAPPER_DEBUG|false,true|false|
+|GOMAPPER_DISCOVERY_ENABLED|false,true|true|
 |GOMAPPER_DISCOVERY_NETWORKS|comma separated list of networks or ip addresses|none|
-|GOMAPPER_DISCOVERY_DEBUG|0,1,false,true|false|
+|*GOMAPPER_PLUGIN_CONFIG*|*Per plugin, see below*|*variable*|
+
+For now the toml configuration is actually easier for per plugin configurations. Env based is a bit hacky but I'll find a better way to manage it.
+
+|Nmap Environment Variable|Options|Default|
+|----------|:-------------:|------:|
+|GOMAPPER_NMAP_DISCOVERY_MODE|nmap_ping,nmap_connect,nmap_syn,nmap_ack,nmap_udp|nmap_ping|
 
 Network discovery by default will only act on private networks. Override this behavior by specifying additional networks
 
 ## Commands
+
+*needs updating*
 
 ```bash
 $> # Start the service via the command line or docker

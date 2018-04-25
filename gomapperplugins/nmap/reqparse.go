@@ -15,18 +15,17 @@
     along with gomapper.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-package scanner
+package nmap
 
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/tinyzimmer/gomapper/formats"
 	"github.com/tinyzimmer/gomapper/logging"
 )
 
-func RequestScanner(input *formats.ReqInput) (Scanner, error) {
+func RequestScanner(input *formats.ReqInput, conf map[string]interface{}) (Scanner, error) {
 	scanner := Scanner{}
 	scanner.Failed = false
 	scanner.ReqInput = input
@@ -43,16 +42,8 @@ func RequestScanner(input *formats.ReqInput) (Scanner, error) {
 	} else {
 		scanner.SetTarget(target)
 	}
-	if len(input.RawArgs) > 0 {
-		scanner.SetRawInput(input.RawArgs)
-	} else {
-		scanner.SetHelperInput()
-	}
-	if input.CustomExec != "" {
-		scanner.SetExec(input.CustomExec)
-	} else {
-		scanner.SetExec("nmap")
-	}
+	scanner.SetHelperInput(input.Method, input.Options)
+	scanner.SetExec("nmap")
 	return scanner, nil
 }
 
@@ -65,15 +56,15 @@ func checkTarget(target string) (string, error) {
 }
 
 func checkScanMethod(method string) (string, error) {
-	if method == "tcp-connect" {
+	if method == "nmap_connect" {
 		return "-sT", nil
-	} else if method == "tcp-syn" {
+	} else if method == "nmap_syn" {
 		return "-sS", nil
-	} else if method == "tcp-ack" {
+	} else if method == "nmap_ack" {
 		return "-sA", nil
-	} else if method == "udp" {
+	} else if method == "nmap_udp" {
 		return "-sU", nil
-	} else if method == "ping" {
+	} else if method == "nmap_ping" {
 		return "-sn", nil
 	} else if method != "" {
 		err := errors.New("Invalid scan method")
@@ -95,34 +86,35 @@ func checkDetectionMethod(method string) (string, error) {
 	return "", nil
 }
 
-func GetHelperArgs(input *formats.ReqInput, xml string) ([]string, error) {
+func GetHelperArgs(method string, opts map[string]string) ([]string, error) {
 	logging.LogInfo("Determining scan arguments")
 	var computedArgs []string
-	method, err := checkScanMethod(input.Method)
+	method, err := checkScanMethod(method)
 	if err == nil {
 		computedArgs = append(computedArgs, method)
 	} else {
 		return nil, err
 	}
-	detection, err := checkDetectionMethod(input.Detection)
-	if err == nil {
-		computedArgs = append(computedArgs, detection)
-	} else {
-		return nil, err
-	}
-	if input.Script != "" {
-		computedArgs = append(computedArgs, fmt.Sprintf("--script=%s", input.Script))
-	}
-	if input.ScriptArgs != "" {
-		computedArgs = append(computedArgs, fmt.Sprintf("--script-args=%s", input.ScriptArgs))
-	}
-	if input.Ports != "" {
+	detect, detectOk := opts["detection"]
+	ports, portsOk := opts["ports"]
+	script, scriptOk := opts["script"]
+	scriptArgs, scriptArgsOk := opts["scriptArgs"]
+	if portsOk {
 		computedArgs = append(computedArgs, "-p")
-		computedArgs = append(computedArgs, input.Ports)
+		computedArgs = append(computedArgs, ports)
 	}
-	computedArgs = append(computedArgs, "-oX")
-	computedArgs = append(computedArgs, xml)
-	computedArgs = append(computedArgs, input.Target)
-	logging.LogInfo(strings.Join(computedArgs, " "))
+	if detectOk {
+		detection, err := checkDetectionMethod(detect)
+		if err != nil {
+			return nil, err
+		}
+		computedArgs = append(computedArgs, detection)
+	}
+	if scriptOk {
+		computedArgs = append(computedArgs, fmt.Sprintf("--script=%s", script))
+		if scriptArgsOk {
+			computedArgs = append(computedArgs, fmt.Sprintf("--script-args=%s", scriptArgs))
+		}
+	}
 	return computedArgs, nil
 }

@@ -15,7 +15,7 @@
     along with gomapper.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-package scanner
+package nmap
 
 import (
 	"bytes"
@@ -28,7 +28,6 @@ import (
 
 	"github.com/tinyzimmer/gomapper/formats"
 	"github.com/tinyzimmer/gomapper/logging"
-	"github.com/tinyzimmer/gomapper/nmapresult"
 )
 
 type Scanner struct {
@@ -37,9 +36,8 @@ type Scanner struct {
 	Target       string
 	RawArgs      []string
 	ComputedArgs []string
-	RawEnforce   bool
 	Xml          string
-	Results      *nmapresult.NmapRun
+	Results      *NmapRun
 	Error        ErrorResponse
 	Failed       bool
 	Debug        bool
@@ -58,7 +56,7 @@ func InitScanner(target string, debug bool) (Scanner, error) {
 	scanner.SetDebug(debug)
 	xml, err := getOutXml()
 	if err != nil {
-		err := errors.New("Could not initiate scanner")
+		err := errors.New("nmap: Could not initiate scanner")
 		return scanner, err
 	}
 	scanner.Xml = xml
@@ -67,34 +65,42 @@ func InitScanner(target string, debug bool) (Scanner, error) {
 
 func (s *Scanner) SetDebug(debug bool) {
 	if debug {
-		logging.LogDebug("Initializing scanner with debug")
+		logging.LogDebug("nmap: Initializing scanner with debug")
 	}
 	s.Debug = debug
 }
 
-func (s *Scanner) SetHelperInput() {
-	s.RawEnforce = false
-}
-
-func (s *Scanner) SetRawInput(args []string) {
-	s.RawEnforce = true
+func (s *Scanner) SetHelperInput(method string, opts map[string]string) {
+	args, err := GetHelperArgs(method, opts)
+	if err != nil {
+		s.Failed = true
+		s.HandleReturn(err, "", "")
+	}
 	s.RawArgs = args
 }
 
-func (s *Scanner) SetStealthDiscovery() {
-	s.RawEnforce = true
-	s.RawArgs = append(s.RawArgs, "-P0")
+func (s *Scanner) SetRawInput(args []string) {
+	s.RawArgs = args
+}
+
+func (s *Scanner) SetAckDiscovery() {
+	s.RawArgs = append(s.RawArgs, "-sA")
+}
+
+func (s *Scanner) SetSynDiscovery() {
 	s.RawArgs = append(s.RawArgs, "-sS")
 }
 
 func (s *Scanner) SetPingDiscovery() {
-	s.RawEnforce = true
 	s.RawArgs = append(s.RawArgs, "-sn")
 }
 
 func (s *Scanner) SetConnectDiscovery() {
-	s.RawEnforce = true
 	s.RawArgs = append(s.RawArgs, "-sT")
+}
+
+func (s *Scanner) SetUdpDiscovery() {
+	s.RawArgs = append(s.RawArgs, "-sU")
 }
 
 func (s *Scanner) SetExec(executable string) {
@@ -106,32 +112,6 @@ func (s *Scanner) SetTarget(target string) {
 }
 
 func (s *Scanner) RunScan() {
-	if s.RawEnforce == true {
-		s.RunRawArgScan()
-	} else {
-		s.RunHelperScan()
-	}
-}
-
-func (s *Scanner) RunHelperScan() {
-	stdout, stderr := createPipes()
-	args, err := GetHelperArgs(s.ReqInput, s.Xml)
-	if err != nil {
-		s.Failed = true
-		s.HandleReturn(err, "", "")
-	} else {
-		cmd := exec.Command(s.Executable, args...)
-		if s.Debug {
-			logging.LogDebug(fmt.Sprint(cmd))
-		}
-		cmd.Stdout = stdout
-		cmd.Stderr = stderr
-		err := cmd.Run()
-		s.HandleReturn(err, stdout.String(), stderr.String())
-	}
-}
-
-func (s *Scanner) RunRawArgScan() {
 	stdout, stderr := createPipes()
 	rawArgs := append(s.RawArgs, "-oX")
 	rawArgs = append(rawArgs, s.Xml)
@@ -153,7 +133,7 @@ func (s *Scanner) HandleReturn(err error, stdout string, stderr string) {
 	} else {
 		results := ParseRun(s.Xml)
 		s.Results = results
-		logging.LogInfo(fmt.Sprintf("Scan completed in %s seconds", formats.FloatToString(results.RunStats.Finished.Elapsed)))
+		logging.LogInfo(fmt.Sprintf("nmap: Scan completed in %s seconds", formats.FloatToString(results.RunStats.Finished.Elapsed)))
 	}
 }
 
@@ -170,9 +150,9 @@ func (s *Scanner) ReturnFail(err error, msg string) {
 	s.Error = response
 }
 
-func ParseRun(filePath string) *nmapresult.NmapRun {
+func ParseRun(filePath string) *NmapRun {
 	file, _ := ioutil.ReadFile(filePath)
-	res := &nmapresult.NmapRun{}
+	res := &NmapRun{}
 	xml.Unmarshal([]byte(string(file)), &res)
 	os.Remove(filePath)
 	return res

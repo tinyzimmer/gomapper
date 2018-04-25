@@ -115,7 +115,7 @@ func DetectLocalNetworks(addr net.IP) ([]net.IPNet, error) {
 	var networks []net.IPNet
 	destAddr, err := DestAddr(DEFAULT_PING_HOST)
 	if err != nil {
-		logging.LogError(fmt.Sprintf("Trace Detection Error: %s", err.Error()))
+		logging.LogError(fmt.Sprintf("trace: Trace Detection Error: %s", err.Error()))
 		return networks, err
 	}
 	var sourceAddr [4]byte
@@ -127,13 +127,13 @@ func DetectLocalNetworks(addr net.IP) ([]net.IPNet, error) {
 	for {
 		recvSocket, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_RAW, syscall.IPPROTO_ICMP)
 		if err != nil {
-			logging.LogWarn("Could not create raw socket for ping probe, are you running in the docker container? If not, do that, or try root.")
-			logging.LogWarn(fmt.Sprintf("Traceroute Detection Error: %s", err.Error()))
+			logging.LogWarn("trace: Could not create raw socket for ping probe, are you running in the docker container? If not, do that, or try root.")
+			logging.LogWarn(fmt.Sprintf("trace: Traceroute Detection Error: %s", err.Error()))
 			return networks, err
 		}
 		sendSocket, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_DGRAM, syscall.IPPROTO_UDP)
 		if err != nil {
-			logging.LogWarn(fmt.Sprintf("Traceroute Detection Error: %s", err.Error()))
+			logging.LogWarn(fmt.Sprintf("trace: Traceroute Detection Error: %s", err.Error()))
 			return networks, err
 		}
 		syscall.SetsockoptInt(sendSocket, 0x0, syscall.IP_TTL, ttl)
@@ -155,7 +155,7 @@ func DetectLocalNetworks(addr net.IP) ([]net.IPNet, error) {
 				network := net.IPNet{IP: netObj, Mask: net.IPv4Mask(255, 255, 255, 0)}
 				if !NetContains(networks, network) {
 					networks = append(networks, network)
-					logging.LogInfo(fmt.Sprintf("Local Network Detected: %s/%s", network.IP, DEFAULT_ASSUMED_NETMASK))
+					logging.LogInfo(fmt.Sprintf("trace: Local Network Detected: %s/%s", network.IP, DEFAULT_ASSUMED_NETMASK))
 				}
 			}
 			ttl += 1
