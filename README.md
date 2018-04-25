@@ -2,6 +2,8 @@
 
 Gomapper aims to be a pluggable passive network mapper for various applications. It will be able to utilize different engines to draw dynamic maps of networks (with potentially exposed vulnerabilties) and store them in memory. The maps are queryable via a REST-like API.
 
+*The main draw, at least in my opinion, is the extremely minimal (only 30MB!) docker container it is able to run in. This makes it easy for a network administrator at a new gig to plop a tiny container down on a subnet and get a detailed analysis of it's surroundings in just a few seconds. Or you can just run as needed (on anything that will run docker) to get a quick layout of an environment*
+
 The individual "engines" themselves can also support ad-hoc queries. For now there is an "nmap" engine which can be queried similar (needs updating) to the methods below and returns the detailed response in an easy to parse Json format.
 
 I plan to create engines that can interact with various cloud provider APIs to do more intelligent analysis and draw more detailed maps in those types of environments.
