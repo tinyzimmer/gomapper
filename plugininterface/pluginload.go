@@ -18,14 +18,15 @@
 package plugininterface
 
 import (
+	"errors"
 	"fmt"
-	"net"
 
 	"github.com/tinyzimmer/gomapper/config"
 	"github.com/tinyzimmer/gomapper/formats"
 	"github.com/tinyzimmer/gomapper/gomapperplugins"
 	"github.com/tinyzimmer/gomapper/logging"
 
+	"github.com/tinyzimmer/gomapper/gomapperplugins/awsvpc"
 	"github.com/tinyzimmer/gomapper/gomapperplugins/nmap"
 )
 
@@ -68,8 +69,13 @@ func LoadPlugins(conf config.Configuration) (loadedPlugins LoadedPlugins) {
 }
 
 func loadPluginInterface(mod string) (methods []string, interf gomapperplugins.PluginInterface, err error) {
-	if mod == "nmap" {
+	switch mod {
+	case "nmap":
 		methods, interf, err = nmap.LoadPlugin()
+	case "awsvpc":
+		methods, interf, err = awsvpc.LoadPlugin()
+	default:
+		err = errors.New("Tried to load invalid mod interface")
 	}
 	return
 }
@@ -92,7 +98,7 @@ func (g GomapperPlugin) GetInterface() (methods []string, inter gomapperplugins.
 	return
 }
 
-func (g GomapperPlugin) DiscoverNetworks() ([]net.IPNet, error) {
+func (g GomapperPlugin) DiscoverNetworks() ([]string, error) {
 	_, inter, _ := g.GetInterface()
 	networks, err := inter.DiscoverNetworks(g.Config)
 	if err != nil {

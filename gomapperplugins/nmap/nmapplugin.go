@@ -20,7 +20,6 @@ package nmap
 import (
 	"errors"
 	"fmt"
-	"net"
 	"os"
 
 	"github.com/tinyzimmer/gomapper/formats"
@@ -80,7 +79,7 @@ func (p NmapPlugin) ScanNetwork(conf map[string]interface{}, network string) (db
 	return
 }
 
-func (p NmapPlugin) DiscoverNetworks(conf map[string]interface{}) (networks []net.IPNet, err error) {
+func (p NmapPlugin) DiscoverNetworks(conf map[string]interface{}) (res []string, err error) {
 	debug, _ := conf["debug"].(bool)
 	if debug {
 		logging.LogDebug(fmt.Sprintf("nmap: %s", conf))
@@ -93,7 +92,10 @@ func (p NmapPlugin) DiscoverNetworks(conf map[string]interface{}) (networks []ne
 	if err != nil {
 		return
 	}
-	networks, err = netutils.DetectLocalNetworks(addr)
+	networks, err := netutils.DetectLocalNetworks(addr)
+	for _, netw := range networks {
+		res = append(res, netw.String())
+	}
 	return
 }
 

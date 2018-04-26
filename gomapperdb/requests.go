@@ -53,8 +53,7 @@ func (db MemoryDatabase) RunPlugins(config config.Configuration) {
 			logging.LogError(err.Error())
 		} else {
 			for _, netw := range discoveredNetworks {
-				netString := netw.String()
-				dbNetwork, err := plugin.ScanNetwork(netString)
+				dbNetwork, err := plugin.ScanNetwork(netw)
 				if err != nil {
 					logging.LogError(err.Error())
 				} else {

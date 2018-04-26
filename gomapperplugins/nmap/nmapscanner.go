@@ -84,22 +84,37 @@ func (s *Scanner) SetRawInput(args []string) {
 }
 
 func (s *Scanner) SetAckDiscovery() {
+	if s.Debug {
+		logging.LogDebug("nmap: Setting -sA nmap flag for nmap_ack scan")
+	}
 	s.RawArgs = append(s.RawArgs, "-sA")
 }
 
 func (s *Scanner) SetSynDiscovery() {
+	if s.Debug {
+		logging.LogDebug("nmap: Setting -sS nmap half-open scan")
+	}
 	s.RawArgs = append(s.RawArgs, "-sS")
 }
 
 func (s *Scanner) SetPingDiscovery() {
+	if s.Debug {
+		logging.LogDebug("nmap: Setting -sn nmap ping only scan")
+	}
 	s.RawArgs = append(s.RawArgs, "-sn")
 }
 
 func (s *Scanner) SetConnectDiscovery() {
+	if s.Debug {
+		logging.LogDebug("nmap: Setting -sT nmap flag tcp connect scan")
+	}
 	s.RawArgs = append(s.RawArgs, "-sT")
 }
 
 func (s *Scanner) SetUdpDiscovery() {
+	if s.Debug {
+		logging.LogDebug("nmap: Setting -sU nmap flag for udp scan")
+	}
 	s.RawArgs = append(s.RawArgs, "-sU")
 }
 
@@ -113,9 +128,15 @@ func (s *Scanner) SetTarget(target string) {
 
 func (s *Scanner) RunScan() {
 	stdout, stderr := createPipes()
+	if s.Debug {
+		logging.LogDebug("nmap: created buffers for nmap output")
+	}
 	rawArgs := append(s.RawArgs, "-oX")
 	rawArgs = append(rawArgs, s.Xml)
 	rawArgs = append(rawArgs, s.Target)
+	if s.Debug {
+		logging.LogDebug("nmap: finished computing args. running command")
+	}
 	cmd := exec.Command(s.Executable, rawArgs...)
 	if s.Debug {
 		logging.LogDebug(fmt.Sprint(cmd))
@@ -123,6 +144,9 @@ func (s *Scanner) RunScan() {
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	err := cmd.Run()
+	if s.Debug {
+		logging.LogDebug("nmap: command complete processing results")
+	}
 	s.HandleReturn(err, stdout.String(), stderr.String())
 }
 

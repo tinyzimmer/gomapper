@@ -23,8 +23,10 @@ type DbNetwork struct {
 }
 
 type DbHost struct {
+	Id       string
 	IP       string
 	MAC      string
+	Hostname string
 	Services []DbService
 }
 

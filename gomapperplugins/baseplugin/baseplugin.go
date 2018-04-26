@@ -15,14 +15,29 @@
     along with gomapper.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-package gomapperplugins
+package baseplugin
 
 import (
 	"github.com/tinyzimmer/gomapper/formats"
+	"github.com/tinyzimmer/gomapper/gomapperplugins"
 )
 
-type PluginInterface interface {
-	DiscoverNetworks(map[string]interface{}) ([]string, error)
-	ScanNetwork(map[string]interface{}, string) (formats.DbNetwork, error)
-	HandleScanRequest(map[string]interface{}, *formats.ReqInput) (interface{}, formats.DbNetwork)
+type BasePlugin struct{}
+
+func LoadPlugin() ([]string, gomapperplugins.PluginInterface, error) {
+	methods := []string{}
+	p := BasePlugin{}
+	return methods, p, nil
+}
+
+func (p BasePlugin) ScanNetwork(conf map[string]interface{}, network string) (dbEntry formats.DbNetwork, err error) {
+	return
+}
+
+func (p BasePlugin) DiscoverNetworks(conf map[string]interface{}) (networks []string, err error) {
+	return
+}
+
+func (p BasePlugin) HandleScanRequest(conf map[string]interface{}, input *formats.ReqInput) (response interface{}, dbEntry formats.DbNetwork) {
+	return
 }

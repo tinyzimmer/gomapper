@@ -15,14 +15,29 @@
     along with gomapper.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-package gomapperplugins
+package awsvpc
 
 import (
 	"github.com/tinyzimmer/gomapper/formats"
+	"github.com/tinyzimmer/gomapper/gomapperplugins"
 )
 
-type PluginInterface interface {
-	DiscoverNetworks(map[string]interface{}) ([]string, error)
-	ScanNetwork(map[string]interface{}, string) (formats.DbNetwork, error)
-	HandleScanRequest(map[string]interface{}, *formats.ReqInput) (interface{}, formats.DbNetwork)
+type AwsPlugin struct{}
+
+func LoadPlugin() ([]string, gomapperplugins.PluginInterface, error) {
+	methods := []string{}
+	p := AwsPlugin{}
+	return methods, p, nil
+}
+
+func (p AwsPlugin) ScanNetwork(conf map[string]interface{}, network string) (dbEntry formats.DbNetwork, err error) {
+	return
+}
+
+func (p AwsPlugin) DiscoverNetworks(conf map[string]interface{}) (networks []string, err error) {
+	return
+}
+
+func (p AwsPlugin) HandleScanRequest(conf map[string]interface{}, input *formats.ReqInput) (response interface{}, dbEntry formats.DbNetwork) {
+	return
 }
